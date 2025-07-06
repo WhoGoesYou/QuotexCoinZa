@@ -1,0 +1,100 @@
+# QUOTEX COIN WALLETS - Cryptocurrency Trading Platform
+
+## Overview
+
+QUOTEX COIN za is a South African cryptocurrency trading platform built with modern web technologies. It provides users with the ability to buy, sell, and manage cryptocurrency wallets with real-time market data integration. The platform features a comprehensive admin panel for user management and transaction oversight.
+
+## System Architecture
+
+The application follows a full-stack monorepo architecture:
+
+- **Frontend**: React with TypeScript, using Vite for build tooling
+- **Backend**: Express.js with TypeScript
+- **Database**: PostgreSQL with Drizzle ORM
+- **Authentication**: Replit OAuth integration
+- **Real-time Communication**: WebSocket implementation
+- **UI Framework**: Tailwind CSS with shadcn/ui components
+- **State Management**: React Query for server state management
+
+## Key Components
+
+### Database Schema
+- **Users**: Stores user profiles with Replit OAuth integration
+- **Cryptocurrencies**: Defines available cryptocurrencies (BTC, ETH, XRP, SOL, USDT, USDC)
+- **Wallets**: User cryptocurrency holdings
+- **Transactions**: Buy/sell transaction records
+- **ZAR Balances**: South African Rand balances for users
+- **Market Data**: Real-time cryptocurrency price information
+- **Sessions**: Session storage for authentication
+
+### Frontend Architecture
+- **Component Structure**: Modular UI components using shadcn/ui
+- **Pages**: Landing, Dashboard, Trading, Admin, and 404 pages
+- **Hooks**: Custom hooks for authentication and mobile detection
+- **Services**: WebSocket service for real-time updates and crypto API service
+- **Routing**: File-based routing with Wouter
+
+### Backend Architecture
+- **Express Server**: RESTful API with middleware for logging and error handling
+- **Authentication**: Replit OAuth with session management
+- **Database Layer**: Drizzle ORM with PostgreSQL connection pooling
+- **WebSocket Server**: Real-time communication for market updates
+- **Storage Layer**: Abstracted data access layer with comprehensive CRUD operations
+
+## Data Flow
+
+1. **User Authentication**: Users authenticate via Replit OAuth
+2. **Market Data**: Real-time cryptocurrency prices fetched from external APIs
+3. **Trading**: Users execute buy/sell transactions with automatic wallet updates
+4. **Admin Operations**: Administrators can manage users and view system analytics
+5. **Real-time Updates**: WebSocket connections provide live market data and transaction updates
+
+## External Dependencies
+
+### Core Dependencies
+- **@neondatabase/serverless**: PostgreSQL database connection
+- **drizzle-orm**: Type-safe database ORM
+- **@tanstack/react-query**: Server state management
+- **@radix-ui/react-***: Headless UI components
+- **express**: Web framework for Node.js
+- **ws**: WebSocket implementation
+
+### Authentication & Security
+- **passport**: Authentication middleware
+- **openid-client**: OpenID Connect client for Replit OAuth
+- **express-session**: Session management
+- **connect-pg-simple**: PostgreSQL session store
+
+### UI & Styling
+- **tailwindcss**: Utility-first CSS framework
+- **class-variance-authority**: Type-safe variant management
+- **lucide-react**: Icon library
+
+## Deployment Strategy
+
+The application is designed for deployment on Replit with the following configuration:
+
+- **Development**: `npm run dev` - Runs both frontend and backend in development mode
+- **Build**: `npm run build` - Creates production build using Vite and esbuild
+- **Production**: `npm run start` - Serves the production build
+- **Database**: Uses environment variable `DATABASE_URL` for PostgreSQL connection
+
+### Environment Variables Required
+- `DATABASE_URL`: PostgreSQL connection string
+- `SESSION_SECRET`: Secret key for session encryption
+- `REPLIT_DOMAINS`: Allowed domains for OAuth
+- `ISSUER_URL`: OAuth issuer URL (defaults to Replit)
+- `REPL_ID`: Replit application ID
+
+## Changelog
+
+```
+Changelog:
+- July 06, 2025. Initial setup
+```
+
+## User Preferences
+
+```
+Preferred communication style: Simple, everyday language.
+```
