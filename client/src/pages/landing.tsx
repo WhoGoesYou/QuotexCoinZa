@@ -3,17 +3,27 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
 import { Coins, Shield, Clock, Headphones, TrendingUp, Users, Wallet, BarChart3 } from "lucide-react";
 
 export default function Landing() {
   const [email, setEmail] = useState("");
+  const { toast } = useToast();
 
   const handleSignUp = () => {
-    window.location.href = "/api/login";
+    toast({
+      title: "Coming Soon",
+      description: "Authentication is temporarily disabled. You can view the enhanced design and features!",
+      duration: 4000,
+    });
   };
 
   const handleSignIn = () => {
-    window.location.href = "/api/login";
+    toast({
+      title: "Coming Soon", 
+      description: "Authentication is temporarily disabled. You can view the enhanced design and features!",
+      duration: 4000,
+    });
   };
 
   return (
