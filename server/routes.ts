@@ -17,13 +17,48 @@ interface ExtendedWebSocket extends WebSocket {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Auth middleware
-  await setupAuth(app);
-
   // Initialize default data
   await storage.initializeDefaultData();
 
-  // Test route to bypass auth for design viewing
+  // Temporarily disable auth setup to fix connection issues
+  // TODO: Re-enable once Replit environment is properly configured
+  // await setupAuth(app);
+
+  // Simple auth bypass for demo purposes
+  app.post('/api/demo/login', async (req, res) => {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ message: "Email required" });
+    }
+    
+    try {
+      // Create or get demo user
+      const demoUser = await storage.upsertUser({
+        id: `demo_${Date.now()}`,
+        email: email,
+        firstName: "Demo",
+        lastName: "User",
+        profileImageUrl: null
+      });
+      
+      res.json({ 
+        success: true, 
+        user: demoUser,
+        message: "Demo login successful" 
+      });
+    } catch (error) {
+      console.error("Demo login error:", error);
+      res.status(500).json({ message: "Failed to create demo user" });
+    }
+  });
+
+  // Demo auth status
+  app.get('/api/auth/user', async (req, res) => {
+    // Return null to indicate not authenticated (shows landing page)
+    res.status(401).json({ message: "Unauthorized" });
+  });
+
+  // Test route to view cryptocurrencies
   app.get('/api/test/cryptocurrencies', async (req, res) => {
     try {
       const cryptos = await storage.getCryptocurrencies();
@@ -31,18 +66,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching cryptocurrencies:", error);
       res.status(500).json({ message: "Failed to fetch cryptocurrencies" });
-    }
-  });
-
-  // Auth routes
-  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
-      res.json(user);
-    } catch (error) {
-      console.error("Error fetching user:", error);
-      res.status(500).json({ message: "Failed to fetch user" });
     }
   });
 

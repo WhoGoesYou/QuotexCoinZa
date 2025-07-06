@@ -27,7 +27,10 @@ export default function Navbar() {
   ];
 
   const handleLogout = () => {
-    window.location.href = "/api/logout";
+    // Clear demo session
+    localStorage.removeItem('demoUser');
+    // Reload to show landing page
+    window.location.reload();
   };
 
   return (

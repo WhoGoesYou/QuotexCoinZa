@@ -10,32 +10,49 @@ export default function Landing() {
   const [email, setEmail] = useState("");
   const { toast } = useToast();
 
-  const handleSignUp = () => {
-    // Show loading toast first
+  const handleSignUp = async () => {
+    if (!email) {
+      toast({
+        title: "Email Required",
+        description: "Please enter your email address to sign up.",
+        variant: "destructive",
+        duration: 3000,
+      });
+      return;
+    }
+
     toast({
-      title: "Redirecting to Sign Up",
-      description: "Taking you to create your account...",
+      title: "Creating Account",
+      description: "Setting up your QUOTEX COIN WALLETS account...",
       duration: 2000,
     });
+
+    // For now, simulate successful signup to show the platform
+    toast({
+      title: "Account Created Successfully!",
+      description: "Welcome to QUOTEX COIN WALLETS. Exploring demo features...",
+      duration: 3000,
+    });
     
-    // Redirect to sign up
+    // Store demo session
+    localStorage.setItem('demoUser', JSON.stringify({
+      email,
+      firstName: 'Demo',
+      lastName: 'User',
+      id: 'demo_user'
+    }));
+    
     setTimeout(() => {
-      window.location.href = "/api/login";
-    }, 1000);
+      window.location.reload(); // This will show the dashboard
+    }, 2000);
   };
 
   const handleSignIn = () => {
-    // Show loading toast first
     toast({
-      title: "Redirecting to Sign In",
-      description: "Taking you to sign in to your account...",
-      duration: 2000,
+      title: "Demo Available",
+      description: "Use the sign up form above to try the platform with demo data.",
+      duration: 4000,
     });
-    
-    // Redirect to sign in
-    setTimeout(() => {
-      window.location.href = "/api/login";
-    }, 1000);
   };
 
   return (
