@@ -2,8 +2,8 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
-import { getSession, isAuthenticated, isAdmin, registerUser, loginUser } from "./auth";
-import { insertTransactionSchema, insertWalletSchema, registerUserSchema, loginUserSchema } from "@shared/schema";
+import { getSession, isAuthenticated, isAdmin, registerUser, loginUser, registerAdmin, loginAdmin } from "./auth";
+import { insertTransactionSchema, insertWalletSchema, registerUserSchema, loginUserSchema, registerAdminSchema, loginAdminSchema } from "@shared/schema";
 import { z } from "zod";
 
 interface WebSocketMessage {
@@ -80,6 +80,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching user:", error);
       res.status(500).json({ message: "Failed to fetch user" });
+    }
+  });
+
+  // Admin auth routes
+  app.post('/api/admin/auth/register', async (req, res) => {
+    try {
+      const adminData = registerAdminSchema.parse(req.body);
+      const admin = await registerAdmin(adminData);
+      req.session.adminId = admin.id;
+      res.json({ 
+        message: "Admin registration successful", 
+        admin: { 
+          id: admin.id, 
+          username: admin.username, 
+          email: admin.email,
+          firstName: admin.firstName,
+          lastName: admin.lastName,
+          role: admin.role
+        } 
+      });
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.post('/api/admin/auth/login', async (req, res) => {
+    try {
+      const credentials = loginAdminSchema.parse(req.body);
+      const admin = await loginAdmin(credentials);
+      req.session.adminId = admin.id;
+      res.json({ 
+        message: "Admin login successful", 
+        admin: { 
+          id: admin.id, 
+          username: admin.username, 
+          email: admin.email,
+          firstName: admin.firstName,
+          lastName: admin.lastName,
+          role: admin.role
+        } 
+      });
+    } catch (error: any) {
+      res.status(401).json({ message: error.message });
+    }
+  });
+
+  app.post('/api/admin/auth/logout', (req, res) => {
+    req.session.adminId = undefined;
+    res.json({ message: "Admin logout successful" });
+  });
+
+  app.get('/api/admin/auth/user', isAdmin, async (req, res) => {
+    try {
+      res.json(req.admin);
+    } catch (error) {
+      console.error("Error fetching admin user:", error);
+      res.status(500).json({ message: "Failed to fetch admin user" });
     }
   });
 

@@ -1,5 +1,6 @@
 import {
   users,
+  adminUsers,
   cryptocurrencies,
   wallets,
   transactions,
@@ -8,6 +9,9 @@ import {
   type User,
   type InsertUser,
   type RegisterUser,
+  type AdminUser,
+  type InsertAdminUser,
+  type RegisterAdmin,
   type Cryptocurrency,
   type InsertCryptocurrency,
   type Wallet,
@@ -34,6 +38,13 @@ export interface IStorage {
   getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: RegisterUser & { passwordHash: string }): Promise<User>;
   updateUser(id: number, updates: Partial<User>): Promise<User>;
+  
+  // Admin user operations
+  getAdminUser(id: number): Promise<AdminUser | undefined>;
+  getAdminUserByUsername(username: string): Promise<AdminUser | undefined>;
+  getAdminUserByEmail(email: string): Promise<AdminUser | undefined>;
+  createAdminUser(admin: RegisterAdmin & { passwordHash: string }): Promise<AdminUser>;
+  updateAdminUser(id: number, updates: Partial<AdminUser>): Promise<AdminUser>;
   
   // Cryptocurrency operations
   getCryptocurrencies(): Promise<Cryptocurrency[]>;
@@ -107,6 +118,46 @@ export class DatabaseStorage implements IStorage {
       .where(eq(users.id, id))
       .returning();
     return user;
+  }
+
+  // Admin user operations
+  async getAdminUser(id: number): Promise<AdminUser | undefined> {
+    const [admin] = await db.select().from(adminUsers).where(eq(adminUsers.id, id));
+    return admin;
+  }
+
+  async getAdminUserByUsername(username: string): Promise<AdminUser | undefined> {
+    const [admin] = await db.select().from(adminUsers).where(eq(adminUsers.username, username));
+    return admin;
+  }
+
+  async getAdminUserByEmail(email: string): Promise<AdminUser | undefined> {
+    const [admin] = await db.select().from(adminUsers).where(eq(adminUsers.email, email));
+    return admin;
+  }
+
+  async createAdminUser(adminData: RegisterAdmin & { passwordHash: string }): Promise<AdminUser> {
+    const [admin] = await db
+      .insert(adminUsers)
+      .values({
+        username: adminData.username,
+        email: adminData.email,
+        passwordHash: adminData.passwordHash,
+        firstName: adminData.firstName || null,
+        lastName: adminData.lastName || null,
+        role: adminData.role || "admin",
+      })
+      .returning();
+    return admin;
+  }
+
+  async updateAdminUser(id: number, updates: Partial<AdminUser>): Promise<AdminUser> {
+    const [admin] = await db
+      .update(adminUsers)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(adminUsers.id, id))
+      .returning();
+    return admin;
   }
 
   // Cryptocurrency operations

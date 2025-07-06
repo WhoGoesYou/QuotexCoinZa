@@ -25,7 +25,7 @@ export const sessions = pgTable(
   (table) => [index("IDX_session_expire").on(table.expire)],
 );
 
-// User storage table
+// User storage table - for regular users
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: varchar("username", { length: 50 }).notNull().unique(),
@@ -36,7 +36,20 @@ export const users = pgTable("users", {
   profileImageUrl: varchar("profile_image_url"),
   country: varchar("country").default("South Africa"),
   city: varchar("city"),
-  isAdmin: boolean("is_admin").default(false),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Admin users table - separate from regular users
+export const adminUsers = pgTable("admin_users", {
+  id: serial("id").primaryKey(),
+  username: varchar("username", { length: 50 }).notNull().unique(),
+  email: varchar("email").unique().notNull(),
+  passwordHash: varchar("password_hash").notNull(),
+  firstName: varchar("first_name"),
+  lastName: varchar("last_name"),
+  role: varchar("role", { length: 20 }).default("admin"),
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
@@ -149,6 +162,7 @@ export const marketDataRelations = relations(marketData, ({ one }) => ({
 
 // Zod schemas
 export const insertUserSchema = createInsertSchema(users).omit({ id: true });
+export const insertAdminUserSchema = createInsertSchema(adminUsers).omit({ id: true });
 export const insertCryptocurrencySchema = createInsertSchema(cryptocurrencies).omit({ id: true });
 export const insertWalletSchema = createInsertSchema(wallets).omit({ id: true });
 export const insertTransactionSchema = createInsertSchema(transactions).omit({ id: true });
@@ -158,6 +172,8 @@ export const insertMarketDataSchema = createInsertSchema(marketData).omit({ id: 
 // Types
 export type InsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
+export type InsertAdminUser = typeof adminUsers.$inferInsert;
+export type AdminUser = typeof adminUsers.$inferSelect;
 
 // Registration and login schemas
 export const registerUserSchema = z.object({
@@ -175,8 +191,25 @@ export const loginUserSchema = z.object({
   password: z.string(),
 });
 
+// Admin registration and login schemas
+export const registerAdminSchema = z.object({
+  username: z.string().min(3).max(50),
+  email: z.string().email(),
+  password: z.string().min(6),
+  firstName: z.string().min(1).optional(),
+  lastName: z.string().min(1).optional(),
+  role: z.string().default("admin"),
+});
+
+export const loginAdminSchema = z.object({
+  username: z.string(),
+  password: z.string(),
+});
+
 export type RegisterUser = z.infer<typeof registerUserSchema>;
 export type LoginUser = z.infer<typeof loginUserSchema>;
+export type RegisterAdmin = z.infer<typeof registerAdminSchema>;
+export type LoginAdmin = z.infer<typeof loginAdminSchema>;
 export type Cryptocurrency = typeof cryptocurrencies.$inferSelect;
 export type InsertCryptocurrency = z.infer<typeof insertCryptocurrencySchema>;
 export type Wallet = typeof wallets.$inferSelect;
