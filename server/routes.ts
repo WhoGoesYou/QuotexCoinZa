@@ -2,8 +2,8 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
-import { setupAuth, isAuthenticated } from "./replitAuth";
-import { insertTransactionSchema, insertWalletSchema } from "@shared/schema";
+import { getSession, isAuthenticated, isAdmin, registerUser, loginUser } from "./auth";
+import { insertTransactionSchema, insertWalletSchema, registerUserSchema, loginUserSchema } from "@shared/schema";
 import { z } from "zod";
 
 interface WebSocketMessage {
@@ -12,7 +12,7 @@ interface WebSocketMessage {
 }
 
 interface ExtendedWebSocket extends WebSocket {
-  userId?: string;
+  userId?: number;
   isAdmin?: boolean;
 }
 
@@ -20,42 +20,67 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Initialize default data
   await storage.initializeDefaultData();
 
-  // Temporarily disable auth setup to fix connection issues
-  // TODO: Re-enable once Replit environment is properly configured
-  // await setupAuth(app);
+  // Session middleware
+  app.use(getSession());
 
-  // Simple auth bypass for demo purposes
-  app.post('/api/demo/login', async (req, res) => {
-    const { email } = req.body;
-    if (!email) {
-      return res.status(400).json({ message: "Email required" });
-    }
-    
+  // Auth routes
+  app.post('/api/auth/register', async (req, res) => {
     try {
-      // Create or get demo user
-      const demoUser = await storage.upsertUser({
-        id: `demo_${Date.now()}`,
-        email: email,
-        firstName: "Demo",
-        lastName: "User",
-        profileImageUrl: null
-      });
-      
+      const userData = registerUserSchema.parse(req.body);
+      const user = await registerUser(userData);
+      req.session.userId = user.id;
       res.json({ 
-        success: true, 
-        user: demoUser,
-        message: "Demo login successful" 
+        message: "Registration successful", 
+        user: { 
+          id: user.id, 
+          username: user.username, 
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName 
+        } 
       });
-    } catch (error) {
-      console.error("Demo login error:", error);
-      res.status(500).json({ message: "Failed to create demo user" });
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
     }
   });
 
-  // Demo auth status
-  app.get('/api/auth/user', async (req, res) => {
-    // Return null to indicate not authenticated (shows landing page)
-    res.status(401).json({ message: "Unauthorized" });
+  app.post('/api/auth/login', async (req, res) => {
+    try {
+      const credentials = loginUserSchema.parse(req.body);
+      const user = await loginUser(credentials);
+      req.session.userId = user.id;
+      res.json({ 
+        message: "Login successful", 
+        user: { 
+          id: user.id, 
+          username: user.username, 
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          isAdmin: user.isAdmin
+        } 
+      });
+    } catch (error: any) {
+      res.status(401).json({ message: error.message });
+    }
+  });
+
+  app.post('/api/auth/logout', (req, res) => {
+    req.session.destroy((err) => {
+      if (err) {
+        return res.status(500).json({ message: "Could not log out" });
+      }
+      res.json({ message: "Logout successful" });
+    });
+  });
+
+  app.get('/api/auth/user', isAuthenticated, async (req, res) => {
+    try {
+      res.json(req.user);
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      res.status(500).json({ message: "Failed to fetch user" });
+    }
   });
 
   // Test route to view cryptocurrencies

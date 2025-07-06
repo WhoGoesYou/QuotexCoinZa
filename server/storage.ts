@@ -6,7 +6,8 @@ import {
   zarBalances,
   marketData,
   type User,
-  type UpsertUser,
+  type InsertUser,
+  type RegisterUser,
   type Cryptocurrency,
   type InsertCryptocurrency,
   type Wallet,
@@ -27,28 +28,31 @@ import { randomBytes } from "crypto";
 
 // Interface for storage operations
 export interface IStorage {
-  // User operations (mandatory for Replit Auth)
-  getUser(id: string): Promise<User | undefined>;
-  upsertUser(user: UpsertUser): Promise<User>;
+  // User operations (local auth)
+  getUser(id: number): Promise<User | undefined>;
+  getUserByUsername(username: string): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
+  createUser(user: RegisterUser & { passwordHash: string }): Promise<User>;
+  updateUser(id: number, updates: Partial<User>): Promise<User>;
   
   // Cryptocurrency operations
   getCryptocurrencies(): Promise<Cryptocurrency[]>;
   createCryptocurrency(crypto: InsertCryptocurrency): Promise<Cryptocurrency>;
   
   // Wallet operations
-  getUserWallets(userId: string): Promise<WalletWithCrypto[]>;
+  getUserWallets(userId: number): Promise<WalletWithCrypto[]>;
   createWallet(wallet: InsertWallet): Promise<Wallet>;
   updateWalletBalance(walletId: number, balance: string): Promise<void>;
-  getWalletByUserAndCrypto(userId: string, cryptoId: number): Promise<Wallet | undefined>;
+  getWalletByUserAndCrypto(userId: number, cryptoId: number): Promise<Wallet | undefined>;
   
   // Transaction operations
   createTransaction(transaction: InsertTransaction): Promise<Transaction>;
-  getUserTransactions(userId: string): Promise<TransactionWithCrypto[]>;
+  getUserTransactions(userId: number): Promise<TransactionWithCrypto[]>;
   getAllTransactions(): Promise<TransactionWithCrypto[]>;
   
   // ZAR balance operations
-  getUserZarBalance(userId: string): Promise<ZarBalance>;
-  updateZarBalance(userId: string, balance: string): Promise<void>;
+  getUserZarBalance(userId: number): Promise<ZarBalance>;
+  updateZarBalance(userId: number, balance: string): Promise<void>;
   
   // Market data operations
   getMarketData(): Promise<MarketData[]>;
@@ -56,8 +60,8 @@ export interface IStorage {
   
   // Admin operations
   getAllUsers(): Promise<UserWithProfile[]>;
-  creditUserBalance(userId: string, cryptoId: number, amount: string, adminUserId: string): Promise<void>;
-  debitUserBalance(userId: string, cryptoId: number, amount: string, adminUserId: string): Promise<void>;
+  creditUserBalance(userId: number, cryptoId: number, amount: string, adminUserId: number): Promise<void>;
+  debitUserBalance(userId: number, cryptoId: number, amount: string, adminUserId: number): Promise<void>;
   
   // Initialization
   initializeDefaultData(): Promise<void>;
@@ -65,22 +69,42 @@ export interface IStorage {
 
 export class DatabaseStorage implements IStorage {
   // User operations
-  async getUser(id: string): Promise<User | undefined> {
+  async getUser(id: number): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
     return user;
   }
 
-  async upsertUser(userData: UpsertUser): Promise<User> {
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user;
+  }
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user;
+  }
+
+  async createUser(userData: RegisterUser & { passwordHash: string }): Promise<User> {
     const [user] = await db
       .insert(users)
-      .values(userData)
-      .onConflictDoUpdate({
-        target: users.id,
-        set: {
-          ...userData,
-          updatedAt: new Date(),
-        },
+      .values({
+        username: userData.username,
+        email: userData.email,
+        passwordHash: userData.passwordHash,
+        firstName: userData.firstName || null,
+        lastName: userData.lastName || null,
+        country: userData.country || "South Africa",
+        city: userData.city || null,
       })
+      .returning();
+    return user;
+  }
+
+  async updateUser(id: number, updates: Partial<User>): Promise<User> {
+    const [user] = await db
+      .update(users)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(users.id, id))
       .returning();
     return user;
   }
@@ -99,7 +123,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Wallet operations
-  async getUserWallets(userId: string): Promise<WalletWithCrypto[]> {
+  async getUserWallets(userId: number): Promise<WalletWithCrypto[]> {
     return await db
       .select()
       .from(wallets)
@@ -126,7 +150,7 @@ export class DatabaseStorage implements IStorage {
       .where(eq(wallets.id, walletId));
   }
 
-  async getWalletByUserAndCrypto(userId: string, cryptoId: number): Promise<Wallet | undefined> {
+  async getWalletByUserAndCrypto(userId: number, cryptoId: number): Promise<Wallet | undefined> {
     const [wallet] = await db
       .select()
       .from(wallets)
@@ -143,7 +167,7 @@ export class DatabaseStorage implements IStorage {
     return newTransaction;
   }
 
-  async getUserTransactions(userId: string): Promise<TransactionWithCrypto[]> {
+  async getUserTransactions(userId: number): Promise<TransactionWithCrypto[]> {
     return await db
       .select()
       .from(transactions)
@@ -169,7 +193,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   // ZAR balance operations
-  async getUserZarBalance(userId: string): Promise<ZarBalance> {
+  async getUserZarBalance(userId: number): Promise<ZarBalance> {
     const [balance] = await db
       .select()
       .from(zarBalances)
@@ -186,7 +210,7 @@ export class DatabaseStorage implements IStorage {
     return balance;
   }
 
-  async updateZarBalance(userId: string, balance: string): Promise<void> {
+  async updateZarBalance(userId: number, balance: string): Promise<void> {
     await db
       .insert(zarBalances)
       .values({ userId, balance })
@@ -237,7 +261,7 @@ export class DatabaseStorage implements IStorage {
     return result;
   }
 
-  async creditUserBalance(userId: string, cryptoId: number, amount: string, adminUserId: string): Promise<void> {
+  async creditUserBalance(userId: number, cryptoId: number, amount: string, adminUserId: number): Promise<void> {
     const wallet = await this.getWalletByUserAndCrypto(userId, cryptoId);
     if (!wallet) {
       throw new Error("Wallet not found");
@@ -256,7 +280,7 @@ export class DatabaseStorage implements IStorage {
     });
   }
 
-  async debitUserBalance(userId: string, cryptoId: number, amount: string, adminUserId: string): Promise<void> {
+  async debitUserBalance(userId: number, cryptoId: number, amount: string, adminUserId: number): Promise<void> {
     const wallet = await this.getWalletByUserAndCrypto(userId, cryptoId);
     if (!wallet) {
       throw new Error("Wallet not found");
@@ -319,51 +343,7 @@ export class DatabaseStorage implements IStorage {
       }
     }
 
-    // Create default user: HANLIE DOROTHEA THERON
-    const defaultUser = {
-      id: "hanlie_theron_001",
-      email: "HANLIETHERON13@GMAIL.COM",
-      firstName: "HANLIE DOROTHEA",
-      lastName: "THERON",
-      country: "South Africa",
-      city: "Johannesburg",
-      isAdmin: false,
-    };
-
-    const existingUser = await this.getUser(defaultUser.id);
-    if (!existingUser) {
-      await this.upsertUser(defaultUser);
-
-      // Create wallets for the default user
-      const cryptos = await this.getCryptocurrencies();
-      for (const crypto of cryptos) {
-        await this.createWallet({
-          userId: defaultUser.id,
-          cryptoId: crypto.id,
-          address: this.generateWalletAddress(crypto.symbol),
-          balance: "0",
-        });
-      }
-
-      // Initialize ZAR balance
-      await this.updateZarBalance(defaultUser.id, "127450.89");
-    }
-
-    // Create admin user
-    const adminUser = {
-      id: "admin_001",
-      email: "admin@quotexcoin.za",
-      firstName: "Admin",
-      lastName: "User",
-      country: "South Africa",
-      city: "Cape Town",
-      isAdmin: true,
-    };
-
-    const existingAdmin = await this.getUser(adminUser.id);
-    if (!existingAdmin) {
-      await this.upsertUser(adminUser);
-    }
+    // Users will be created through registration - no default users needed
 
     // Initialize market data with ZAR prices
     const marketDataDefaults = [

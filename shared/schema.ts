@@ -25,16 +25,19 @@ export const sessions = pgTable(
   (table) => [index("IDX_session_expire").on(table.expire)],
 );
 
-// User storage table (mandatory for Replit Auth)
+// User storage table
 export const users = pgTable("users", {
-  id: varchar("id").primaryKey().notNull(),
-  email: varchar("email").unique(),
+  id: serial("id").primaryKey(),
+  username: varchar("username", { length: 50 }).notNull().unique(),
+  email: varchar("email").unique().notNull(),
+  passwordHash: varchar("password_hash").notNull(),
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
   country: varchar("country").default("South Africa"),
   city: varchar("city"),
   isAdmin: boolean("is_admin").default(false),
+  isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -52,7 +55,7 @@ export const cryptocurrencies = pgTable("cryptocurrencies", {
 // User wallets for different cryptocurrencies
 export const wallets = pgTable("wallets", {
   id: serial("id").primaryKey(),
-  userId: varchar("user_id").notNull(),
+  userId: integer("user_id").notNull(),
   cryptoId: integer("crypto_id").notNull(),
   address: varchar("address", { length: 255 }).notNull(),
   balance: decimal("balance", { precision: 20, scale: 8 }).default("0"),
@@ -63,14 +66,14 @@ export const wallets = pgTable("wallets", {
 // Transaction history
 export const transactions = pgTable("transactions", {
   id: serial("id").primaryKey(),
-  userId: varchar("user_id").notNull(),
+  userId: integer("user_id").notNull(),
   cryptoId: integer("crypto_id").notNull(),
   type: varchar("type", { length: 20 }).notNull(), // 'buy', 'sell', 'deposit', 'withdrawal', 'admin_credit', 'admin_debit'
   amount: decimal("amount", { precision: 20, scale: 8 }).notNull(),
   price: decimal("price", { precision: 20, scale: 8 }),
   totalZar: decimal("total_zar", { precision: 20, scale: 2 }),
   status: varchar("status", { length: 20 }).default("completed"), // 'pending', 'completed', 'failed'
-  adminUserId: varchar("admin_user_id"), // For admin actions
+  adminUserId: integer("admin_user_id"), // For admin actions
   description: text("description"),
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -78,7 +81,7 @@ export const transactions = pgTable("transactions", {
 // ZAR balances for users
 export const zarBalances = pgTable("zar_balances", {
   id: serial("id").primaryKey(),
-  userId: varchar("user_id").notNull().unique(),
+  userId: integer("user_id").notNull().unique(),
   balance: decimal("balance", { precision: 20, scale: 2 }).default("0"),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -153,8 +156,27 @@ export const insertZarBalanceSchema = createInsertSchema(zarBalances).omit({ id:
 export const insertMarketDataSchema = createInsertSchema(marketData).omit({ id: true });
 
 // Types
-export type UpsertUser = typeof users.$inferInsert;
+export type InsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
+
+// Registration and login schemas
+export const registerUserSchema = z.object({
+  username: z.string().min(3).max(50),
+  email: z.string().email(),
+  password: z.string().min(6),
+  firstName: z.string().min(1).optional(),
+  lastName: z.string().min(1).optional(),
+  country: z.string().optional(),
+  city: z.string().optional(),
+});
+
+export const loginUserSchema = z.object({
+  username: z.string(),
+  password: z.string(),
+});
+
+export type RegisterUser = z.infer<typeof registerUserSchema>;
+export type LoginUser = z.infer<typeof loginUserSchema>;
 export type Cryptocurrency = typeof cryptocurrencies.$inferSelect;
 export type InsertCryptocurrency = z.infer<typeof insertCryptocurrencySchema>;
 export type Wallet = typeof wallets.$inferSelect;
