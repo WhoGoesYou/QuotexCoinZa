@@ -11,19 +11,31 @@ export default function Landing() {
   const { toast } = useToast();
 
   const handleSignUp = () => {
+    // Show loading toast first
     toast({
-      title: "Coming Soon",
-      description: "Authentication is temporarily disabled. You can view the enhanced design and features!",
-      duration: 4000,
+      title: "Redirecting to Sign Up",
+      description: "Taking you to create your account...",
+      duration: 2000,
     });
+    
+    // Redirect to sign up
+    setTimeout(() => {
+      window.location.href = "/api/login";
+    }, 1000);
   };
 
   const handleSignIn = () => {
+    // Show loading toast first
     toast({
-      title: "Coming Soon", 
-      description: "Authentication is temporarily disabled. You can view the enhanced design and features!",
-      duration: 4000,
+      title: "Redirecting to Sign In",
+      description: "Taking you to sign in to your account...",
+      duration: 2000,
     });
+    
+    // Redirect to sign in
+    setTimeout(() => {
+      window.location.href = "/api/login";
+    }, 1000);
   };
 
   return (

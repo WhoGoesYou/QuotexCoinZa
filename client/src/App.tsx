@@ -27,11 +27,12 @@ function Router() {
 
   return (
     <Switch>
-      {/* Temporarily show landing page always due to auth issues */}
-      <Route path="/" component={Landing} />
-      {isAuthenticated && (
+      {!isAuthenticated ? (
+        <Route path="/" component={Landing} />
+      ) : (
         <>
           <Navbar />
+          <Route path="/" component={Dashboard} />
           <Route path="/dashboard" component={Dashboard} />
           <Route path="/trading" component={Trading} />
           <Route path="/admin" component={Admin} />
