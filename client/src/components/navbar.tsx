@@ -40,10 +40,9 @@ export default function Navbar() {
               <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
                 <Coins className="text-white w-5 h-5" />
               </div>
-              <span className="text-xl font-bold text-gray-900">QUOTEX COIN WALLETS</span>
-              <Badge variant="secondary" className="bg-green-100 text-green-800">
-                🇿🇦 ZA
-              </Badge>
+              <div className="bg-gradient-to-r from-primary to-red-700 bg-clip-text text-transparent">
+                <span className="text-xl font-bold">QUOTEX COIN WALLETS</span>
+              </div>
             </Link>
           </div>
 

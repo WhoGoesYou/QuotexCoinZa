@@ -2,7 +2,7 @@
 
 ## Overview
 
-QUOTEX COIN za is a South African cryptocurrency trading platform built with modern web technologies. It provides users with the ability to buy, sell, and manage cryptocurrency wallets with real-time market data integration. The platform features a comprehensive admin panel for user management and transaction oversight.
+QUOTEX COIN WALLETS is a professional cryptocurrency trading platform built with modern web technologies, targeting South African users and international markets. It provides users with the ability to buy, sell, and manage cryptocurrency wallets with real-time market data integration. The platform features a comprehensive admin panel for user management and transaction oversight. Prices are displayed primarily in USD with ZAR conversion for South African users.
 
 ## System Architecture
 
@@ -91,6 +91,16 @@ The application is designed for deployment on Replit with the following configur
 ```
 Changelog:
 - July 06, 2025. Initial setup
+- July 06, 2025. Enhanced branding and design:
+  * Updated platform name from "QUOTEX COIN za" to "QUOTEX COIN WALLETS"
+  * Added gradient styling to brand name throughout application
+  * Removed ZA badges from navigation and hero section
+  * Updated tagline to "Serving South Africa & Beyond"
+  * Changed hero message to "Your gateway to digital wealth"
+  * Enhanced cryptocurrency price display with USD primary pricing
+  * Added professional Bitcoin-focused design with color-coded crypto icons
+  * Improved crypto cards with enhanced visual hierarchy and ZAR conversion display
+  * Fixed database constraints and application stability issues
 ```
 
 ## User Preferences

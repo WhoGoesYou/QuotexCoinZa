@@ -27,10 +27,9 @@ export default function Landing() {
                 <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
                   <Coins className="text-white w-5 h-5" />
                 </div>
-                <span className="text-xl font-bold text-gray-900">QUOTEX COIN WALLETS</span>
-                <Badge variant="secondary" className="bg-green-100 text-green-800">
-                  🇿🇦 ZA
-                </Badge>
+                <div className="bg-gradient-to-r from-primary to-red-700 bg-clip-text text-transparent">
+                  <span className="text-xl font-bold">QUOTEX COIN WALLETS</span>
+                </div>
               </div>
             </div>
             
@@ -60,7 +59,7 @@ export default function Landing() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div className="space-y-8">
               <div className="inline-flex items-center space-x-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full">
-                <span className="text-sm">🇿🇦 Serving South Africa & Beyond</span>
+                <span className="text-sm">Serving South Africa & Beyond</span>
               </div>
               <h1 className="text-5xl lg:text-6xl font-bold leading-tight">
                 Your gateway to digital wealth
@@ -90,35 +89,59 @@ export default function Landing() {
               </p>
             </div>
             <div className="relative">
-              <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 shadow-2xl">
+              <div className="bg-gradient-to-br from-gray-900/80 to-black/60 backdrop-blur-sm rounded-2xl p-8 shadow-2xl border border-white/10">
                 <div className="grid grid-cols-2 gap-6">
-                  <div className="bg-white/5 rounded-xl p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm text-white/70">Bitcoin</span>
-                      <span className="text-green-400 text-sm">+2.5%</span>
+                  <div className="bg-gradient-to-br from-orange-500/20 to-yellow-600/20 border border-orange-500/30 rounded-xl p-6 hover:shadow-lg transition-all duration-300">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center space-x-2">
+                        <div className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center">
+                          <span className="text-white text-xs font-bold">₿</span>
+                        </div>
+                        <span className="text-sm text-white font-medium">Bitcoin</span>
+                      </div>
+                      <span className="text-green-400 text-sm font-semibold">+2.5%</span>
                     </div>
-                    <div className="text-2xl font-bold">R1,847,892</div>
+                    <div className="text-3xl font-bold text-white">$97,245</div>
+                    <div className="text-xs text-gray-400 mt-1">≈ R1,847,892</div>
                   </div>
-                  <div className="bg-white/5 rounded-xl p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm text-white/70">Ethereum</span>
-                      <span className="text-green-400 text-sm">+1.8%</span>
+                  <div className="bg-gradient-to-br from-blue-500/20 to-purple-600/20 border border-blue-500/30 rounded-xl p-6 hover:shadow-lg transition-all duration-300">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center space-x-2">
+                        <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
+                          <span className="text-white text-xs font-bold">Ξ</span>
+                        </div>
+                        <span className="text-sm text-white font-medium">Ethereum</span>
+                      </div>
+                      <span className="text-green-400 text-sm font-semibold">+1.8%</span>
                     </div>
-                    <div className="text-2xl font-bold">R43,295</div>
+                    <div className="text-3xl font-bold text-white">$2,285</div>
+                    <div className="text-xs text-gray-400 mt-1">≈ R43,295</div>
                   </div>
-                  <div className="bg-white/5 rounded-xl p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm text-white/70">XRP</span>
-                      <span className="text-green-400 text-sm">+5.2%</span>
+                  <div className="bg-gradient-to-br from-blue-600/20 to-gray-500/20 border border-blue-600/30 rounded-xl p-6 hover:shadow-lg transition-all duration-300">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center space-x-2">
+                        <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center">
+                          <span className="text-white text-xs font-bold">X</span>
+                        </div>
+                        <span className="text-sm text-white font-medium">XRP</span>
+                      </div>
+                      <span className="text-green-400 text-sm font-semibold">+5.2%</span>
                     </div>
-                    <div className="text-2xl font-bold">R38.56</div>
+                    <div className="text-3xl font-bold text-white">$2.03</div>
+                    <div className="text-xs text-gray-400 mt-1">≈ R38.56</div>
                   </div>
-                  <div className="bg-white/5 rounded-xl p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm text-white/70">Solana</span>
-                      <span className="text-green-400 text-sm">+3.1%</span>
+                  <div className="bg-gradient-to-br from-purple-500/20 to-pink-600/20 border border-purple-500/30 rounded-xl p-6 hover:shadow-lg transition-all duration-300">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center space-x-2">
+                        <div className="w-6 h-6 bg-purple-500 rounded-full flex items-center justify-center">
+                          <span className="text-white text-xs font-bold">S</span>
+                        </div>
+                        <span className="text-sm text-white font-medium">Solana</span>
+                      </div>
+                      <span className="text-green-400 text-sm font-semibold">+3.1%</span>
                     </div>
-                    <div className="text-2xl font-bold">R2,574</div>
+                    <div className="text-3xl font-bold text-white">$135.71</div>
+                    <div className="text-xs text-gray-400 mt-1">≈ R2,574</div>
                   </div>
                 </div>
               </div>
@@ -132,28 +155,28 @@ export default function Landing() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-gray-900 mb-4">
-              Explore crypto like Bitcoin, Ethereum, and Dogecoin
+              Professional cryptocurrency trading platform
             </h2>
             <p className="text-xl text-gray-600">
-              Simply and securely buy, sell, and manage hundreds of cryptocurrencies.
+              Trade Bitcoin, Ethereum, and other digital assets with institutional-grade security and real-time market data.
             </p>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[
-              { name: "Bitcoin", symbol: "BTC", price: "R1,847,892.45", change: "+2.56%", positive: true },
-              { name: "Ethereum", symbol: "ETH", price: "R43,295.68", change: "+1.62%", positive: true },
-              { name: "XRP", symbol: "XRP", price: "R38.56", change: "+2.70%", positive: true },
-              { name: "Solana", symbol: "SOL", price: "R2,574.85", change: "+3.03%", positive: true },
-              { name: "Tether", symbol: "USDT", price: "R17.00", change: "0.00%", positive: true },
-              { name: "USD Coin", symbol: "USDC", price: "R17.00", change: "0.00%", positive: true },
+              { name: "Bitcoin", symbol: "BTC", icon: "₿", price: "$97,245", zarPrice: "R1,847,892", change: "+2.56%", positive: true, color: "orange" },
+              { name: "Ethereum", symbol: "ETH", icon: "Ξ", price: "$2,285", zarPrice: "R43,295", change: "+1.62%", positive: true, color: "blue" },
+              { name: "XRP", symbol: "XRP", icon: "X", price: "$2.03", zarPrice: "R38.56", change: "+2.70%", positive: true, color: "blue" },
+              { name: "Solana", symbol: "SOL", icon: "S", price: "$135.71", zarPrice: "R2,574", change: "+3.03%", positive: true, color: "purple" },
+              { name: "Tether", symbol: "USDT", icon: "₮", price: "$1.00", zarPrice: "R19.00", change: "0.00%", positive: true, color: "green" },
+              { name: "USD Coin", symbol: "USDC", icon: "$", price: "$1.00", zarPrice: "R19.00", change: "0.00%", positive: true, color: "blue" },
             ].map((crypto) => (
-              <Card key={crypto.symbol} className="crypto-card">
+              <Card key={crypto.symbol} className="crypto-card hover:shadow-lg transition-all duration-300 border-l-4" style={{borderLeftColor: crypto.color === 'orange' ? '#f97316' : crypto.color === 'blue' ? '#3b82f6' : crypto.color === 'purple' ? '#8b5cf6' : '#10b981'}}>
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
-                        <Coins className="text-white w-5 h-5" />
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold`} style={{backgroundColor: crypto.color === 'orange' ? '#f97316' : crypto.color === 'blue' ? '#3b82f6' : crypto.color === 'purple' ? '#8b5cf6' : '#10b981'}}>
+                        {crypto.icon}
                       </div>
                       <div>
                         <h3 className="font-semibold text-gray-900">{crypto.name}</h3>
@@ -161,15 +184,17 @@ export default function Landing() {
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="font-bold text-lg">{crypto.price}</div>
-                      <div className={`text-sm ${crypto.positive ? 'market-positive' : 'market-negative'}`}>
+                      <div className="font-bold text-lg text-gray-900">{crypto.price}</div>
+                      <div className="text-xs text-gray-500">{crypto.zarPrice}</div>
+                      <div className={`text-sm font-semibold ${crypto.positive ? 'text-green-600' : 'text-red-600'}`}>
                         {crypto.change}
                       </div>
                     </div>
                   </div>
-                  <div className="h-20 bg-gradient-to-r from-primary/10 to-primary/20 rounded-lg flex items-end justify-end p-2">
-                    <div className="text-xs text-primary">
+                  <div className="h-16 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg flex items-center justify-center">
+                    <div className="flex items-center space-x-1 text-gray-600">
                       <TrendingUp className="w-4 h-4" />
+                      <span className="text-xs">24h Trend</span>
                     </div>
                   </div>
                 </CardContent>
