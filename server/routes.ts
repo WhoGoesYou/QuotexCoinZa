@@ -23,6 +23,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Initialize default data
   await storage.initializeDefaultData();
 
+  // Test route to bypass auth for design viewing
+  app.get('/api/test/cryptocurrencies', async (req, res) => {
+    try {
+      const cryptos = await storage.getCryptocurrencies();
+      res.json(cryptos);
+    } catch (error) {
+      console.error("Error fetching cryptocurrencies:", error);
+      res.status(500).json({ message: "Failed to fetch cryptocurrencies" });
+    }
+  });
+
   // Auth routes
   app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
     try {

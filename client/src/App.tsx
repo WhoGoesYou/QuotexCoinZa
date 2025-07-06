@@ -19,7 +19,7 @@ function Router() {
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading QUOTEX COIN za...</p>
+          <p className="text-gray-600">Loading QUOTEX COIN WALLETS...</p>
         </div>
       </div>
     );
@@ -27,12 +27,12 @@ function Router() {
 
   return (
     <Switch>
-      {!isAuthenticated ? (
-        <Route path="/" component={Landing} />
-      ) : (
+      {/* Temporarily show landing page always due to auth issues */}
+      <Route path="/" component={Landing} />
+      {isAuthenticated && (
         <>
           <Navbar />
-          <Route path="/" component={Dashboard} />
+          <Route path="/dashboard" component={Dashboard} />
           <Route path="/trading" component={Trading} />
           <Route path="/admin" component={Admin} />
         </>
