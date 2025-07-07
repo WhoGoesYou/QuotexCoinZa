@@ -9,15 +9,7 @@ export default function Admin() {
   const { toast } = useToast();
   const { admin, isLoading, isAuthenticated } = useAdminAuth();
 
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      toast({
-        title: "Admin Login Required",
-        description: "Please log in with your admin credentials.",
-        variant: "destructive",
-      });
-    }
-  }, [isLoading, isAuthenticated, toast]);
+  // No automatic toast to prevent interference with login flow
 
   if (isLoading) {
     return (

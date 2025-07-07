@@ -133,7 +133,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/admin/auth/user', isAdmin, async (req, res) => {
     try {
-      res.json(req.admin);
+      if (!req.admin) {
+        return res.status(401).json({ message: "Admin not found" });
+      }
+      res.json({
+        id: req.admin.id,
+        username: req.admin.username,
+        email: req.admin.email,
+        firstName: req.admin.firstName,
+        lastName: req.admin.lastName,
+        role: req.admin.role,
+        isActive: req.admin.isActive
+      });
     } catch (error) {
       console.error("Error fetching admin user:", error);
       res.status(500).json({ message: "Failed to fetch admin user" });

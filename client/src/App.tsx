@@ -21,9 +21,8 @@ import Navbar from "@/components/navbar";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
-  const { isAuthenticated: isAdminAuthenticated, isLoading: isAdminLoading } = useAdminAuth();
 
-  if (isLoading || isAdminLoading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900">
         <div className="text-center">

@@ -46,8 +46,8 @@ export default function AdminLogin() {
       });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/auth/user"] });
       reset();
-      // Force a page reload to ensure proper state update
-      window.location.reload();
+      // Redirect to admin dashboard after successful login
+      window.location.href = "/admin";
     },
     onError: (error: any) => {
       toast({

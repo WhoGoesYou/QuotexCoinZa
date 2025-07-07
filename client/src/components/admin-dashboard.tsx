@@ -28,15 +28,20 @@ export default function AdminDashboard() {
   });
 
   if (usersError && isUnauthorizedError(usersError)) {
-    toast({
-      title: "Unauthorized",
-      description: "You are logged out. Logging in again...",
-      variant: "destructive",
-    });
-    setTimeout(() => {
-      window.location.href = "/api/login";
-    }, 500);
-    return null;
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">Session Expired</h1>
+          <p className="text-gray-600 mb-4">Your admin session has expired. Please log in again.</p>
+          <button 
+            onClick={() => window.location.href = "/admin"}
+            className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+          >
+            Return to Admin Login
+          </button>
+        </div>
+      </div>
+    );
   }
 
   // Calculate statistics
