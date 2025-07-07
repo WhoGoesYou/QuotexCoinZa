@@ -523,6 +523,49 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  // Helper method to create default cryptocurrencies
+  async createDefaultCryptocurrencies(): Promise<void> {
+    const defaultCryptos = [
+      { symbol: "BTC", name: "Bitcoin", iconUrl: "/crypto-icons/btc.svg" },
+      { symbol: "ETH", name: "Ethereum", iconUrl: "/crypto-icons/eth.svg" },
+      { symbol: "XRP", name: "Ripple", iconUrl: "/crypto-icons/xrp.svg" },
+      { symbol: "SOL", name: "Solana", iconUrl: "/crypto-icons/sol.svg" },
+      { symbol: "USDT", name: "Tether", iconUrl: "/crypto-icons/usdt.svg" },
+      { symbol: "USDC", name: "USD Coin", iconUrl: "/crypto-icons/usdc.svg" },
+    ];
+
+    for (const crypto of defaultCryptos) {
+      await this.createCryptocurrency(crypto);
+    }
+  }
+
+  // Helper method to create default market data
+  async createDefaultMarketData(): Promise<void> {
+    const cryptos = await this.getCryptocurrencies();
+    const defaultPrices = {
+      BTC: { priceUsd: "95000.00", priceZar: "1710000.00", change24h: "2.5" },
+      ETH: { priceUsd: "3500.00", priceZar: "63000.00", change24h: "1.8" },
+      XRP: { priceUsd: "2.50", priceZar: "45.00", change24h: "-0.5" },
+      SOL: { priceUsd: "220.00", priceZar: "3960.00", change24h: "3.2" },
+      USDT: { priceUsd: "1.00", priceZar: "18.00", change24h: "0.0" },
+      USDC: { priceUsd: "1.00", priceZar: "18.00", change24h: "0.0" },
+    };
+
+    for (const crypto of cryptos) {
+      const priceData = defaultPrices[crypto.symbol as keyof typeof defaultPrices];
+      if (priceData) {
+        await this.updateMarketData(crypto.id, {
+          priceUsd: priceData.priceUsd,
+          priceZar: priceData.priceZar,
+          change24h: priceData.change24h,
+          volume24h: "1000000.00",
+          marketCap: "50000000000.00",
+          lastUpdated: new Date(),
+        });
+      }
+    }
+  }
+
   // Initialize default data
   async initializeDefaultData(): Promise<void> {
     try {
