@@ -1,47 +1,25 @@
 import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/useAuth";
-import { isUnauthorizedError } from "@/lib/authUtils";
-import { websocketService } from "@/services/websocket";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
 import AdminDashboard from "@/components/admin-dashboard";
+import AdminLogin from "@/components/admin-login";
 
 export default function Admin() {
   const { toast } = useToast();
-  const { user, isLoading: authLoading } = useAuth();
+  const { admin, isLoading, isAuthenticated } = useAdminAuth();
 
   useEffect(() => {
-    if (!authLoading && !user) {
+    if (!isLoading && !isAuthenticated) {
       toast({
-        title: "Unauthorized",
-        description: "You are logged out. Logging in again...",
+        title: "Admin Login Required",
+        description: "Please log in with your admin credentials.",
         variant: "destructive",
       });
-      setTimeout(() => {
-        window.location.href = "/api/login";
-      }, 500);
-      return;
     }
+  }, [isLoading, isAuthenticated, toast]);
 
-    if (!authLoading && user && !user.isAdmin) {
-      toast({
-        title: "Access Denied",
-        description: "You don't have admin privileges.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (user) {
-      websocketService.connect(user.id, user.isAdmin);
-    }
-
-    return () => {
-      websocketService.disconnect();
-    };
-  }, [user, authLoading, toast]);
-
-  if (authLoading) {
+  if (isLoading) {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="text-center">
@@ -52,15 +30,8 @@ export default function Admin() {
     );
   }
 
-  if (!user || !user.isAdmin) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">Access Denied</h1>
-          <p className="text-gray-600">You don't have admin privileges.</p>
-        </div>
-      </div>
-    );
+  if (!isAuthenticated) {
+    return <AdminLogin />;
   }
 
   return <AdminDashboard />;

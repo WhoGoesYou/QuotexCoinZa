@@ -47,9 +47,7 @@ function Router() {
       
       {/* Admin routes */}
       <Route path="/admin/login" component={AdminLoginPage} />
-      <Route path="/admin">
-        {isAdminAuthenticated ? <Admin /> : <AdminLoginPage />}
-      </Route>
+      <Route path="/admin" component={Admin} />
       
       {/* Protected user routes */}
       <Route path="/dashboard">

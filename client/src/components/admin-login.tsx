@@ -46,6 +46,8 @@ export default function AdminLogin() {
       });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/auth/user"] });
       reset();
+      // Force a page reload to ensure proper state update
+      window.location.reload();
     },
     onError: (error: any) => {
       toast({
@@ -117,13 +119,7 @@ export default function AdminLogin() {
             </Button>
           </form>
           
-          <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-            <p className="text-sm text-gray-600 text-center">
-              <strong>Default Admin Credentials:</strong><br/>
-              Username: admin<br/>
-              Password: admin123
-            </p>
-          </div>
+          
         </CardContent>
       </Card>
     </div>
