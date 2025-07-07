@@ -111,16 +111,16 @@ export default function AdminDashboard() {
                     });
                     
                     if (response.ok) {
-                      // Redirect to admin login after successful logout
-                      window.location.href = "/admin";
+                      // Redirect to main landing page after successful logout
+                      window.location.href = "/";
                     } else {
                       // Force redirect even if logout fails
-                      window.location.href = "/admin";
+                      window.location.href = "/";
                     }
                   } catch (error) {
                     console.error("Logout error:", error);
                     // Force redirect even if there's an error
-                    window.location.href = "/admin";
+                    window.location.href = "/";
                   }
                 }}
                 variant="outline"
