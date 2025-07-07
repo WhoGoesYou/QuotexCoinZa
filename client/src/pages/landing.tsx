@@ -19,7 +19,7 @@ export default function Landing() {
     },
     {
       question: "What cryptocurrencies can I trade?",
-      response: "We support 6 major cryptocurrencies: Bitcoin (BTC), Ethereum (ETH), Ripple (XRP), Solana (SOL), Tether (USDT), and USD Coin (USDC). All with real-time pricing and instant execution."
+      response: "We support 15+ major cryptocurrencies including: Bitcoin (BTC), Ethereum (ETH), Ripple (XRP), Solana (SOL), Cardano (ADA), Polkadot (DOT), Chainlink (LINK), Litecoin (LTC), Bitcoin Cash (BCH), Polygon (MATIC), Avalanche (AVAX), Cosmos (ATOM), Tether (USDT), USD Coin (USDC), and Binance USD (BUSD). All with real-time pricing and instant execution."
     },
     {
       question: "How do I verify my account?",
@@ -120,7 +120,7 @@ export default function Landing() {
           
           {/* Live Market Ticker */}
           <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg p-4 mb-8 max-w-4xl mx-auto">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
               <div className="text-center">
                 <div className="text-orange-400 font-semibold">BTC/USD</div>
                 <div className="text-white font-bold text-lg">$67,240.00</div>
@@ -140,6 +140,11 @@ export default function Landing() {
                 <div className="text-purple-400 font-semibold">SOL/USD</div>
                 <div className="text-white font-bold text-lg">$178.45</div>
                 <div className="text-green-400">+3.21%</div>
+              </div>
+              <div className="text-center">
+                <div className="text-blue-500 font-semibold">ADA/USD</div>
+                <div className="text-white font-bold text-lg">$1.08</div>
+                <div className="text-green-400">+4.12%</div>
               </div>
             </div>
           </div>
@@ -245,18 +250,27 @@ export default function Landing() {
       {/* Supported Cryptocurrencies */}
       <section className="container mx-auto px-4 py-20">
         <div className="text-center mb-12">
-          <h3 className="text-3xl font-bold text-white mb-4">Supported Cryptocurrencies</h3>
-          <p className="text-white/80">Trade the most popular digital assets</p>
+          <h3 className="text-3xl font-bold text-white mb-4">15+ Supported Cryptocurrencies</h3>
+          <p className="text-white/80">Trade the most popular digital assets with real-time pricing</p>
         </div>
         
-        <div className="grid grid-cols-2 md:grid-cols-6 gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-5 lg:grid-cols-6 gap-4">
           {[
             { name: "Bitcoin", symbol: "BTC", color: "text-orange-400" },
             { name: "Ethereum", symbol: "ETH", color: "text-blue-400" },
             { name: "Ripple", symbol: "XRP", color: "text-blue-300" },
             { name: "Solana", symbol: "SOL", color: "text-purple-400" },
+            { name: "Cardano", symbol: "ADA", color: "text-blue-500" },
+            { name: "Polkadot", symbol: "DOT", color: "text-pink-400" },
+            { name: "Chainlink", symbol: "LINK", color: "text-blue-600" },
+            { name: "Litecoin", symbol: "LTC", color: "text-gray-400" },
+            { name: "Bitcoin Cash", symbol: "BCH", color: "text-green-500" },
+            { name: "Polygon", symbol: "MATIC", color: "text-purple-500" },
+            { name: "Avalanche", symbol: "AVAX", color: "text-red-400" },
+            { name: "Cosmos", symbol: "ATOM", color: "text-indigo-400" },
             { name: "Tether", symbol: "USDT", color: "text-green-400" },
             { name: "USD Coin", symbol: "USDC", color: "text-blue-500" },
+            { name: "Binance USD", symbol: "BUSD", color: "text-yellow-500" },
           ].map((crypto) => (
             <Card key={crypto.symbol} className="bg-white/10 backdrop-blur-sm border-white/20 text-white text-center">
               <CardContent className="p-6">
