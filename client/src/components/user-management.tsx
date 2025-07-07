@@ -6,8 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { StableDialog } from "@/components/ui/stable-dialog";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { FixedModal } from "@/components/ui/fixed-modal";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -341,21 +340,20 @@ export default function UserManagement({ users, isLoading }: UserManagementProps
     };
     
     return (
-      <Sheet open={open} onOpenChange={(isOpen) => !isOpen && handleClose()}>
-        <SheetContent className="w-full sm:max-w-4xl overflow-y-auto">
-          <SheetHeader>
-            <SheetTitle className="flex items-center gap-3">
-              <Avatar className="w-12 h-12">
-                <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-bold">
-                  {user?.firstName?.[0] || 'U'}{user?.lastName?.[0] || 'U'}
-                </AvatarFallback>
-              </Avatar>
-              <div>
-                <h3 className="text-xl font-bold">{user?.firstName || 'Unknown'} {user?.lastName || 'User'}</h3>
-                <p className="text-sm text-gray-600">{user?.email || 'No email'}</p>
-              </div>
-            </SheetTitle>
-          </SheetHeader>
+      <FixedModal open={open} onClose={handleClose}>
+        <div className="mb-6">
+          <div className="flex items-center gap-3">
+            <Avatar className="w-12 h-12">
+              <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-bold">
+                {user?.firstName?.[0] || 'U'}{user?.lastName?.[0] || 'U'}
+              </AvatarFallback>
+            </Avatar>
+            <div>
+              <h3 className="text-xl font-bold">{user?.firstName || 'Unknown'} {user?.lastName || 'User'}</h3>
+              <p className="text-sm text-gray-600">{user?.email || 'No email'}</p>
+            </div>
+          </div>
+        </div>
         
         <Tabs defaultValue="overview" className="w-full">
           <TabsList className="grid w-full grid-cols-3">
@@ -475,9 +473,13 @@ export default function UserManagement({ users, isLoading }: UserManagementProps
                     <div>
                       <Label>Select Cryptocurrency</Label>
                       <select
-                        className="w-full p-2 border rounded-md bg-white"
+                        className="w-full p-3 border-2 border-gray-300 rounded-lg bg-white focus:border-blue-500 focus:outline-none"
                         value={detailSelectedCrypto?.toString() || ""}
-                        onChange={(e) => setDetailSelectedCrypto(parseInt(e.target.value))}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          console.log('Selected crypto:', value);
+                          setDetailSelectedCrypto(parseInt(value));
+                        }}
                       >
                         <option value="">Choose crypto</option>
                         {user?.wallets?.map((wallet: any) => (
@@ -489,27 +491,28 @@ export default function UserManagement({ users, isLoading }: UserManagementProps
                     </div>
                     <div>
                       <Label>Amount</Label>
-                      <Input
+                      <input
                         type="number"
                         step="0.00000001"
                         placeholder="Enter amount"
                         value={detailCreditAmount}
                         onChange={(e) => setDetailCreditAmount(e.target.value)}
+                        className="w-full p-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
                         autoComplete="off"
                       />
                     </div>
-                    <Button 
+                    <button
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
+                        console.log('Credit button clicked');
                         handleDetailCredit();
                       }}
-                      className="w-full bg-green-600 hover:bg-green-700"
+                      className="w-full p-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold disabled:opacity-50"
                       disabled={creditMutation.isPending}
-                      type="button"
                     >
                       {creditMutation.isPending ? "Processing..." : "Credit Balance"}
-                    </Button>
+                    </button>
                   </div>
                 </CardContent>
               </Card>
@@ -524,9 +527,13 @@ export default function UserManagement({ users, isLoading }: UserManagementProps
                     <div>
                       <Label>Select Cryptocurrency</Label>
                       <select
-                        className="w-full p-2 border rounded-md bg-white"
+                        className="w-full p-3 border-2 border-gray-300 rounded-lg bg-white focus:border-blue-500 focus:outline-none"
                         value={detailSelectedCrypto?.toString() || ""}
-                        onChange={(e) => setDetailSelectedCrypto(parseInt(e.target.value))}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          console.log('Selected crypto for debit:', value);
+                          setDetailSelectedCrypto(parseInt(value));
+                        }}
                       >
                         <option value="">Choose crypto</option>
                         {user?.wallets?.map((wallet: any) => (
@@ -538,35 +545,35 @@ export default function UserManagement({ users, isLoading }: UserManagementProps
                     </div>
                     <div>
                       <Label>Amount</Label>
-                      <Input
+                      <input
                         type="number"
                         step="0.00000001"
                         placeholder="Enter amount"
                         value={detailDebitAmount}
                         onChange={(e) => setDetailDebitAmount(e.target.value)}
+                        className="w-full p-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
                         autoComplete="off"
                       />
                     </div>
-                    <Button 
+                    <button
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
+                        console.log('Debit button clicked');
                         handleDetailDebit();
                       }}
-                      className="w-full bg-red-600 hover:bg-red-700"
+                      className="w-full p-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold disabled:opacity-50"
                       disabled={debitMutation.isPending}
-                      type="button"
                     >
                       {debitMutation.isPending ? "Processing..." : "Debit Balance"}
-                    </Button>
+                    </button>
                   </div>
                 </CardContent>
               </Card>
             </div>
           </TabsContent>
         </Tabs>
-        </SheetContent>
-      </Sheet>
+      </FixedModal>
     );
   };
 

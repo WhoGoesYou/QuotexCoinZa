@@ -1,6 +1,7 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { startPriceUpdates } from "./crypto-api";
 
 const app = express();
 app.use(express.json());
@@ -66,5 +67,7 @@ app.use((req, res, next) => {
     reusePort: true,
   }, () => {
     log(`serving on port ${port}`);
+    // Start real-time crypto price updates
+    startPriceUpdates();
   });
 })();
