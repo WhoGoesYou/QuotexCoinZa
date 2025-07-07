@@ -1,3 +1,4 @@
+
 import {
   users,
   adminUsers,
@@ -81,6 +82,8 @@ export interface IStorage {
   // Test user creation with transactions
   createTestUser(userData: RegisterUser & { passwordHash: string }): Promise<User>;
   generateRandomTransactionHistory(userId: number): Promise<void>;
+  clearUserTransactions(userId: number): Promise<void>;
+  resetUserWalletBalances(userId: number): Promise<void>;
 
   // Initialization
   initializeDefaultData(): Promise<void>;
@@ -535,7 +538,7 @@ export class DatabaseStorage implements IStorage {
       const paymentMethod = ["admin_credit", "admin_debit"].includes(type) ? null : paymentMethods[Math.floor(Math.random() * paymentMethods.length)];
       
       // Create transaction with historical date
-      const transaction = await db.insert(transactions).values({
+      await db.insert(transactions).values({
         userId,
         cryptoId: crypto.id,
         type,
@@ -551,7 +554,7 @@ export class DatabaseStorage implements IStorage {
         transactionHash: ["withdrawal", "buy", "sell"].includes(type) ? this.generateRandomHash() : null,
         createdAt: transactionDate,
         updatedAt: transactionDate,
-      }).returning();
+      });
 
       // Small delay to ensure unique timestamps
       await new Promise(resolve => setTimeout(resolve, 1));
@@ -605,7 +608,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   private generateRandomAddress(symbol: string): string {
-    const prefixes: Record<string, string> = {
+    const prefixes: Record<string, string[]> = {
       'BTC': ['1', '3', 'bc1'],
       'ETH': ['0x'],
       'XRP': ['r'],
@@ -632,34 +635,6 @@ export class DatabaseStorage implements IStorage {
       result += chars.charAt(Math.floor(Math.random() * chars.length));
     }
     return result;
-
-        // Get market data for pricing
-        const cryptoMarketData = await db.select().from(marketData).where(eq(marketData.cryptoId, crypto.id));
-        const priceUsd = cryptoMarketData.length > 0 ? parseFloat(cryptoMarketData[0].priceUsd) : 100;
-        const priceZar = cryptoMarketData.length > 0 ? parseFloat(cryptoMarketData[0].priceZar) : 1700;
-
-        const totalUsd = (parseFloat(amount) * priceUsd).toFixed(2);
-        const totalZar = (parseFloat(amount) * priceZar).toFixed(2);
-
-        await this.createTransaction({
-          userId,
-          cryptoId: crypto.id,
-          type: "withdrawal",
-          amount,
-          price: priceUsd.toString(),
-          totalUsd,
-          totalZar,
-          paymentMethod: "wallet_address",
-          walletAddress: this.generateWalletAddress(crypto.symbol),
-          transactionHash: randomBytes(32).toString("hex"),
-          description: "Withdrawal to external wallet",
-        });
-
-        // Update wallet balance
-        const newBalance = (parseFloat(wallet.balance || "0") - parseFloat(amount)).toFixed(8);
-        await this.updateWalletBalance(wallet.id, newBalance);
-      }
-    }
   }
 
   // Helper method to create default cryptocurrencies
