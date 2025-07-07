@@ -79,6 +79,7 @@ export default function UserManagement({ users, isLoading }: UserManagementProps
       setDetailCreditAmount("");
       setDetailSelectedCrypto(null);
       queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/market-data"] });
     },
     onError: (error) => {
       console.error("Credit error:", error);
@@ -114,6 +115,7 @@ export default function UserManagement({ users, isLoading }: UserManagementProps
       setDetailDebitAmount("");
       setDetailSelectedCrypto(null);
       queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/market-data"] });
     },
     onError: (error) => {
       console.error("Debit error:", error);
@@ -329,6 +331,7 @@ export default function UserManagement({ users, isLoading }: UserManagementProps
     if (!user) return null;
     
     const handleClose = (isOpen: boolean) => {
+      // Only allow manual close via X button, not automatic close
       if (!isOpen) {
         // Clear detail dialog state when closing
         setDetailSelectedCrypto(null);
@@ -339,19 +342,39 @@ export default function UserManagement({ users, isLoading }: UserManagementProps
     };
     
     return (
-      <Dialog open={open} onOpenChange={handleClose}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <Dialog open={open} onOpenChange={() => {}} modal={true}>
+        <DialogContent 
+          className="max-w-4xl max-h-[90vh] overflow-y-auto" 
+          onPointerDownOutside={(e) => e.preventDefault()} 
+          onInteractOutside={(e) => e.preventDefault()}
+          onEscapeKeyDown={(e) => e.preventDefault()}
+        >
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-3">
-              <Avatar className="w-12 h-12">
-                <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-bold">
-                  {user?.firstName?.[0] || 'U'}{user?.lastName?.[0] || 'U'}
-                </AvatarFallback>
-              </Avatar>
-              <div>
-                <h3 className="text-xl font-bold">{user?.firstName || 'Unknown'} {user?.lastName || 'User'}</h3>
-                <p className="text-sm text-gray-600">{user?.email || 'No email'}</p>
+            <DialogTitle className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <Avatar className="w-12 h-12">
+                  <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-bold">
+                    {user?.firstName?.[0] || 'U'}{user?.lastName?.[0] || 'U'}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <h3 className="text-xl font-bold">{user?.firstName || 'Unknown'} {user?.lastName || 'User'}</h3>
+                  <p className="text-sm text-gray-600">{user?.email || 'No email'}</p>
+                </div>
               </div>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => {
+                  setDetailSelectedCrypto(null);
+                  setDetailCreditAmount("");
+                  setDetailDebitAmount("");
+                  onClose();
+                }}
+                className="ml-auto"
+              >
+                Close
+              </Button>
             </DialogTitle>
           </DialogHeader>
         
@@ -469,47 +492,41 @@ export default function UserManagement({ users, isLoading }: UserManagementProps
                     <ArrowUpCircle className="w-5 h-5 text-green-600" />
                     <h4 className="font-semibold">Credit User Balance</h4>
                   </div>
-                  <form onSubmit={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    handleDetailCredit();
-                  }}>
-                    <div className="space-y-3">
-                      <div>
-                        <Label>Select Cryptocurrency</Label>
-                        <Select value={detailSelectedCrypto?.toString()} onValueChange={(value) => setDetailSelectedCrypto(parseInt(value))}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Choose crypto" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {user?.wallets?.map((wallet: any) => (
-                              <SelectItem key={wallet.cryptocurrency.id} value={wallet.cryptocurrency.id.toString()}>
-                                {wallet.cryptocurrency.name} ({wallet.cryptocurrency.symbol})
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <Label>Amount</Label>
-                        <Input
-                          type="number"
-                          step="0.00000001"
-                          placeholder="Enter amount"
-                          value={detailCreditAmount}
-                          onChange={(e) => setDetailCreditAmount(e.target.value)}
-                          autoComplete="off"
-                        />
-                      </div>
-                      <Button 
-                        type="submit"
-                        className="w-full bg-green-600 hover:bg-green-700"
-                        disabled={creditMutation.isPending}
-                      >
-                        {creditMutation.isPending ? "Processing..." : "Credit Balance"}
-                      </Button>
+                  <div className="space-y-3">
+                    <div>
+                      <Label>Select Cryptocurrency</Label>
+                      <Select value={detailSelectedCrypto?.toString()} onValueChange={(value) => setDetailSelectedCrypto(parseInt(value))}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Choose crypto" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {user?.wallets?.map((wallet: any) => (
+                            <SelectItem key={wallet.cryptocurrency.id} value={wallet.cryptocurrency.id.toString()}>
+                              {wallet.cryptocurrency.name} ({wallet.cryptocurrency.symbol})
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
-                  </form>
+                    <div>
+                      <Label>Amount</Label>
+                      <Input
+                        type="number"
+                        step="0.00000001"
+                        placeholder="Enter amount"
+                        value={detailCreditAmount}
+                        onChange={(e) => setDetailCreditAmount(e.target.value)}
+                        autoComplete="off"
+                      />
+                    </div>
+                    <Button 
+                      onClick={handleDetailCredit}
+                      className="w-full bg-green-600 hover:bg-green-700"
+                      disabled={creditMutation.isPending}
+                    >
+                      {creditMutation.isPending ? "Processing..." : "Credit Balance"}
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
               
@@ -519,47 +536,41 @@ export default function UserManagement({ users, isLoading }: UserManagementProps
                     <ArrowDownCircle className="w-5 h-5 text-red-600" />
                     <h4 className="font-semibold">Debit User Balance</h4>
                   </div>
-                  <form onSubmit={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    handleDetailDebit();
-                  }}>
-                    <div className="space-y-3">
-                      <div>
-                        <Label>Select Cryptocurrency</Label>
-                        <Select value={detailSelectedCrypto?.toString()} onValueChange={(value) => setDetailSelectedCrypto(parseInt(value))}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Choose crypto" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {user?.wallets?.map((wallet: any) => (
-                              <SelectItem key={wallet.cryptocurrency.id} value={wallet.cryptocurrency.id.toString()}>
-                                {wallet.cryptocurrency.name} ({wallet.cryptocurrency.symbol}) - Balance: {formatCryptoBalance(wallet.balance, wallet.cryptocurrency.symbol)}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <Label>Amount</Label>
-                        <Input
-                          type="number"
-                          step="0.00000001"
-                          placeholder="Enter amount"
-                          value={detailDebitAmount}
-                          onChange={(e) => setDetailDebitAmount(e.target.value)}
-                          autoComplete="off"
-                        />
-                      </div>
-                      <Button 
-                        type="submit"
-                        className="w-full bg-red-600 hover:bg-red-700"
-                        disabled={debitMutation.isPending}
-                      >
-                        {debitMutation.isPending ? "Processing..." : "Debit Balance"}
-                      </Button>
+                  <div className="space-y-3">
+                    <div>
+                      <Label>Select Cryptocurrency</Label>
+                      <Select value={detailSelectedCrypto?.toString()} onValueChange={(value) => setDetailSelectedCrypto(parseInt(value))}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Choose crypto" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {user?.wallets?.map((wallet: any) => (
+                            <SelectItem key={wallet.cryptocurrency.id} value={wallet.cryptocurrency.id.toString()}>
+                              {wallet.cryptocurrency.name} ({wallet.cryptocurrency.symbol}) - Balance: {formatCryptoBalance(wallet.balance, wallet.cryptocurrency.symbol)}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
-                  </form>
+                    <div>
+                      <Label>Amount</Label>
+                      <Input
+                        type="number"
+                        step="0.00000001"
+                        placeholder="Enter amount"
+                        value={detailDebitAmount}
+                        onChange={(e) => setDetailDebitAmount(e.target.value)}
+                        autoComplete="off"
+                      />
+                    </div>
+                    <Button 
+                      onClick={handleDetailDebit}
+                      className="w-full bg-red-600 hover:bg-red-700"
+                      disabled={debitMutation.isPending}
+                    >
+                      {debitMutation.isPending ? "Processing..." : "Debit Balance"}
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             </div>

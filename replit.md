@@ -126,6 +126,14 @@ Changelog:
   * Added clickable user cards and action buttons for credit/debit operations
   * Improved query caching and performance optimization for admin dashboard
   * User balances now display accurate BTC, ETH, XRP, SOL, USDT, USDC values with proper conversions
+- July 07, 2025. Fixed Critical Admin Dialog Issues:
+  * Completely resolved admin action dialog closing problems
+  * Enhanced dialog stability with proper event handling and prevention of auto-close
+  * Fixed form submission issues in credit/debit operations
+  * Added comprehensive input validation for cryptocurrency amounts
+  * Implemented immediate balance updates and real-time data refresh
+  * Enhanced user experience with stable modal interactions
+  * All admin actions now function properly without dialog interruptions
 ```
 
 ## User Preferences
