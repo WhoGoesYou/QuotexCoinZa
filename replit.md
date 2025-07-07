@@ -116,6 +116,16 @@ Changelog:
   * Enhanced security and trust sections with visual indicators
   * Improved security with proper client/server separation
   * Project now runs cleanly in Replit environment without errors
+- July 07, 2025. Enhanced Admin Panel User Management:
+  * Fixed admin authentication middleware to use proper isAdmin instead of isAuthenticated
+  * Corrected admin session handling (adminId vs userId) for all admin routes
+  * Created comprehensive user management interface with detailed crypto balances
+  * Added interactive user detail dialog with Overview, Crypto Balances, and Admin Actions tabs
+  * Implemented real-time USD and ZAR conversion for crypto balances using live market data
+  * Enhanced user list with featured user highlighting (Hanlie Dorothea Theron)
+  * Added clickable user cards and action buttons for credit/debit operations
+  * Improved query caching and performance optimization for admin dashboard
+  * User balances now display accurate BTC, ETH, XRP, SOL, USDT, USDC values with proper conversions
 ```
 
 ## User Preferences

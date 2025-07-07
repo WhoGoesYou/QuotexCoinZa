@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { isUnauthorizedError } from "@/lib/authUtils";
@@ -21,7 +22,11 @@ import {
   Wallet, 
   Activity,
   CreditCard,
-  MapPin
+  MapPin,
+  TrendingUp,
+  ArrowUpCircle,
+  ArrowDownCircle,
+  DollarSign
 } from "lucide-react";
 
 interface UserManagementProps {
@@ -38,6 +43,20 @@ export default function UserManagement({ users, isLoading }: UserManagementProps
   const [debitAmount, setDebitAmount] = useState("");
   const [selectedCrypto, setSelectedCrypto] = useState<number | null>(null);
   const [actionDialogOpen, setActionDialogOpen] = useState<"credit" | "debit" | null>(null);
+  const [userDetailsOpen, setUserDetailsOpen] = useState(false);
+
+  // Fetch market data for accurate conversions
+  const { data: marketData } = useQuery({
+    queryKey: ["/api/market-data"],
+    staleTime: 30 * 1000, // 30 seconds
+  });
+
+  // Create a map of crypto symbols to market data
+  const marketDataMap = marketData?.reduce((acc: any, item: any) => {
+    const crypto = item.cryptocurrency || {};
+    acc[crypto.symbol] = item;
+    return acc;
+  }, {}) || {};
 
   const creditMutation = useMutation({
     mutationFn: async ({ userId, cryptoId, amount }: { userId: string; cryptoId: number; amount: string }) => {
@@ -150,20 +169,24 @@ export default function UserManagement({ users, isLoading }: UserManagementProps
 
   const calculateTotalBalance = (user: any) => {
     return user.wallets?.reduce((total: number, wallet: any) => {
-      // For demonstration, we'll use a fixed conversion rate
-      // In production, this would use real market data
-      const conversionRates: Record<string, number> = {
-        "BTC": 1847892.45,
-        "ETH": 43295.68,
-        "XRP": 38.56,
-        "SOL": 2574.85,
-        "USDT": 17.00,
-        "USDC": 17.00,
-      };
-      
-      const rate = conversionRates[wallet.cryptocurrency.symbol] || 0;
-      return total + (parseFloat(wallet.balance) * rate);
+      const cryptoSymbol = wallet.cryptocurrency?.symbol;
+      const marketInfo = marketDataMap[cryptoSymbol];
+      const priceZar = marketInfo ? parseFloat(marketInfo.priceZar) : 0;
+      const balance = parseFloat(wallet.balance || "0");
+      return total + (balance * priceZar);
     }, 0) || 0;
+  };
+
+  const calculateCryptoValueUSD = (balance: string, symbol: string) => {
+    const marketInfo = marketDataMap[symbol];
+    const priceUsd = marketInfo ? parseFloat(marketInfo.priceUsd) : 0;
+    return parseFloat(balance || "0") * priceUsd;
+  };
+
+  const calculateCryptoValueZAR = (balance: string, symbol: string) => {
+    const marketInfo = marketDataMap[symbol];
+    const priceZar = marketInfo ? parseFloat(marketInfo.priceZar) : 0;
+    return parseFloat(balance || "0") * priceZar;
   };
 
   const formatCryptoBalance = (balance: string, symbol: string) => {
@@ -176,6 +199,219 @@ export default function UserManagement({ users, isLoading }: UserManagementProps
   // Highlight featured user (HANLIE DOROTHEA THERON)
   const featuredUser = users.find(user => 
     user.email?.toLowerCase() === "hanlietheron13@gmail.com"
+  );
+
+  const UserDetailDialog = ({ user, open, onClose }: { user: any, open: boolean, onClose: () => void }) => (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-3">
+            <Avatar className="w-12 h-12">
+              <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-bold">
+                {user?.firstName?.[0]}{user?.lastName?.[0]}
+              </AvatarFallback>
+            </Avatar>
+            <div>
+              <h3 className="text-xl font-bold">{user?.firstName} {user?.lastName}</h3>
+              <p className="text-sm text-gray-600">{user?.email}</p>
+            </div>
+          </DialogTitle>
+        </DialogHeader>
+        
+        <Tabs defaultValue="overview" className="w-full">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="balances">Crypto Balances</TabsTrigger>
+            <TabsTrigger value="actions">Admin Actions</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="overview" className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3 mb-3">
+                    <DollarSign className="w-5 h-5 text-green-600" />
+                    <h4 className="font-semibold">Total Portfolio Value</h4>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="text-2xl font-bold text-green-600">
+                      R{calculateTotalBalance(user).toLocaleString('en-ZA', { maximumFractionDigits: 2 })}
+                    </div>
+                    <div className="text-sm text-gray-600">
+                      ≈ ${(calculateTotalBalance(user) / 18).toLocaleString('en-US', { maximumFractionDigits: 2 })}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3 mb-3">
+                    <Activity className="w-5 h-5 text-blue-600" />
+                    <h4 className="font-semibold">Account Status</h4>
+                  </div>
+                  <div className="space-y-2">
+                    <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                      Active
+                    </Badge>
+                    <p className="text-sm text-gray-600">
+                      Member since {new Date(user?.createdAt).toLocaleDateString()}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+            
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3 mb-3">
+                  <MapPin className="w-5 h-5 text-purple-600" />
+                  <h4 className="font-semibold">Location</h4>
+                </div>
+                <p className="text-sm text-gray-600">
+                  {user?.city}, {user?.country}
+                </p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="balances" className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {user?.wallets?.map((wallet: any) => (
+                <Card key={wallet.id} className="border-l-4 border-l-orange-500">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
+                          <span className="text-sm font-bold text-orange-700">
+                            {wallet.cryptocurrency?.symbol}
+                          </span>
+                        </div>
+                        <div>
+                          <h4 className="font-semibold">{wallet.cryptocurrency?.name}</h4>
+                          <p className="text-xs text-gray-600">{wallet.cryptocurrency?.symbol}</p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <span className="text-sm text-gray-600">Balance:</span>
+                        <span className="font-semibold">
+                          {formatCryptoBalance(wallet.balance, wallet.cryptocurrency?.symbol)} {wallet.cryptocurrency?.symbol}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm text-gray-600">USD Value:</span>
+                        <span className="font-semibold text-green-600">
+                          ${calculateCryptoValueUSD(wallet.balance, wallet.cryptocurrency?.symbol).toLocaleString('en-US', { maximumFractionDigits: 2 })}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm text-gray-600">ZAR Value:</span>
+                        <span className="font-semibold text-blue-600">
+                          R{calculateCryptoValueZAR(wallet.balance, wallet.cryptocurrency?.symbol).toLocaleString('en-ZA', { maximumFractionDigits: 2 })}
+                        </span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="actions" className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3 mb-4">
+                    <ArrowUpCircle className="w-5 h-5 text-green-600" />
+                    <h4 className="font-semibold">Credit User Balance</h4>
+                  </div>
+                  <div className="space-y-3">
+                    <div>
+                      <Label>Select Cryptocurrency</Label>
+                      <Select value={selectedCrypto?.toString()} onValueChange={(value) => setSelectedCrypto(parseInt(value))}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Choose crypto" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {user?.wallets?.map((wallet: any) => (
+                            <SelectItem key={wallet.cryptocurrency.id} value={wallet.cryptocurrency.id.toString()}>
+                              {wallet.cryptocurrency.name} ({wallet.cryptocurrency.symbol})
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label>Amount</Label>
+                      <Input
+                        type="number"
+                        step="0.00000001"
+                        placeholder="Enter amount"
+                        value={creditAmount}
+                        onChange={(e) => setCreditAmount(e.target.value)}
+                      />
+                    </div>
+                    <Button 
+                      onClick={handleCredit}
+                      className="w-full bg-green-600 hover:bg-green-700"
+                      disabled={creditMutation.isPending}
+                    >
+                      {creditMutation.isPending ? "Processing..." : "Credit Balance"}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3 mb-4">
+                    <ArrowDownCircle className="w-5 h-5 text-red-600" />
+                    <h4 className="font-semibold">Debit User Balance</h4>
+                  </div>
+                  <div className="space-y-3">
+                    <div>
+                      <Label>Select Cryptocurrency</Label>
+                      <Select value={selectedCrypto?.toString()} onValueChange={(value) => setSelectedCrypto(parseInt(value))}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Choose crypto" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {user?.wallets?.map((wallet: any) => (
+                            <SelectItem key={wallet.cryptocurrency.id} value={wallet.cryptocurrency.id.toString()}>
+                              {wallet.cryptocurrency.name} ({wallet.cryptocurrency.symbol})
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label>Amount</Label>
+                      <Input
+                        type="number"
+                        step="0.00000001"
+                        placeholder="Enter amount"
+                        value={debitAmount}
+                        onChange={(e) => setDebitAmount(e.target.value)}
+                      />
+                    </div>
+                    <Button 
+                      onClick={handleDebit}
+                      className="w-full bg-red-600 hover:bg-red-700"
+                      disabled={debitMutation.isPending}
+                    >
+                      {debitMutation.isPending ? "Processing..." : "Debit Balance"}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+        </Tabs>
+      </DialogContent>
+    </Dialog>
   );
 
   return (
@@ -300,6 +536,10 @@ export default function UserManagement({ users, isLoading }: UserManagementProps
                       size="sm"
                       variant="outline"
                       className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                      onClick={() => {
+                        setSelectedUser(featuredUser);
+                        setUserDetailsOpen(true);
+                      }}
                       title="View Details"
                     >
                       <Eye className="w-4 h-4" />
@@ -389,6 +629,10 @@ export default function UserManagement({ users, isLoading }: UserManagementProps
                     size="sm"
                     variant="outline"
                     className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                    onClick={() => {
+                      setSelectedUser(user);
+                      setUserDetailsOpen(true);
+                    }}
                     title="View Details"
                   >
                     <Eye className="w-4 h-4" />
@@ -522,6 +766,13 @@ export default function UserManagement({ users, isLoading }: UserManagementProps
             </div>
           </DialogContent>
         </Dialog>
+
+        {/* User Details Dialog */}
+        <UserDetailDialog 
+          user={selectedUser} 
+          open={userDetailsOpen} 
+          onClose={() => setUserDetailsOpen(false)} 
+        />
       </CardContent>
     </Card>
   );
