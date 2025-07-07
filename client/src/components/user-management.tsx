@@ -73,15 +73,13 @@ export default function UserManagement({ users, isLoading }: UserManagementProps
       queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
     },
     onError: (error) => {
+      console.error("Credit error:", error);
       if (isUnauthorizedError(error)) {
         toast({
-          title: "Unauthorized",
-          description: "You are logged out. Logging in again...",
+          title: "Session Expired",
+          description: "Please log in again to continue.",
           variant: "destructive",
         });
-        setTimeout(() => {
-          window.location.href = "/api/login";
-        }, 500);
         return;
       }
       toast({
@@ -107,15 +105,13 @@ export default function UserManagement({ users, isLoading }: UserManagementProps
       queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
     },
     onError: (error) => {
+      console.error("Debit error:", error);
       if (isUnauthorizedError(error)) {
         toast({
-          title: "Unauthorized",
-          description: "You are logged out. Logging in again...",
+          title: "Session Expired",
+          description: "Please log in again to continue.",
           variant: "destructive",
         });
-        setTimeout(() => {
-          window.location.href = "/api/login";
-        }, 500);
         return;
       }
       toast({
@@ -210,6 +206,7 @@ export default function UserManagement({ users, isLoading }: UserManagementProps
       queryClient.invalidateQueries({ queryKey: ["/api/admin/transactions"] });
       
     } catch (error: any) {
+      console.error("Bulk credit error:", error);
       if (isUnauthorizedError(error)) {
         toast({
           title: "Session Expired",
@@ -220,7 +217,7 @@ export default function UserManagement({ users, isLoading }: UserManagementProps
       }
       toast({
         title: "Bulk Credit Failed",
-        description: "Failed to credit user balances. Please try again.",
+        description: error.message || "Failed to credit user balances. Please try again.",
         variant: "destructive",
       });
     }

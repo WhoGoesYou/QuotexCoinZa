@@ -270,19 +270,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { targetUserId } = req.params;
       const { cryptoId, amount } = req.body;
       
+      console.log('Credit request:', { adminId, targetUserId, cryptoId, amount });
+      
       const schema = z.object({
         cryptoId: z.number(),
-        amount: z.string(),
+        amount: z.string().min(1),
       });
       
       const validated = schema.parse({ cryptoId, amount });
       
+      // Check if user exists
+      const targetUser = await storage.getUser(parseInt(targetUserId));
+      if (!targetUser) {
+        return res.status(404).json({ message: "Target user not found" });
+      }
+      
       await storage.creditUserBalance(parseInt(targetUserId), validated.cryptoId, validated.amount, adminId);
       
+      console.log('Credit successful for user:', targetUserId);
       res.json({ message: "User balance credited successfully" });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error crediting user balance:", error);
-      res.status(500).json({ message: "Failed to credit user balance" });
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ message: "Invalid input data", details: error.errors });
+      }
+      res.status(500).json({ message: error.message || "Failed to credit user balance" });
     }
   });
 
@@ -292,19 +304,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { targetUserId } = req.params;
       const { cryptoId, amount } = req.body;
       
+      console.log('Debit request:', { adminId, targetUserId, cryptoId, amount });
+      
       const schema = z.object({
         cryptoId: z.number(),
-        amount: z.string(),
+        amount: z.string().min(1),
       });
       
       const validated = schema.parse({ cryptoId, amount });
       
+      // Check if user exists
+      const targetUser = await storage.getUser(parseInt(targetUserId));
+      if (!targetUser) {
+        return res.status(404).json({ message: "Target user not found" });
+      }
+      
       await storage.debitUserBalance(parseInt(targetUserId), validated.cryptoId, validated.amount, adminId);
       
+      console.log('Debit successful for user:', targetUserId);
       res.json({ message: "User balance debited successfully" });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error debiting user balance:", error);
-      res.status(500).json({ message: "Failed to debit user balance" });
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ message: "Invalid input data", details: error.errors });
+      }
+      res.status(500).json({ message: error.message || "Failed to debit user balance" });
     }
   });
 
