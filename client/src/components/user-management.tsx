@@ -260,22 +260,25 @@ export default function UserManagement({ users, isLoading }: UserManagementProps
     user.email?.toLowerCase() === "hanlietheron13@gmail.com"
   );
 
-  const UserDetailDialog = ({ user, open, onClose }: { user: any, open: boolean, onClose: () => void }) => (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-3">
-            <Avatar className="w-12 h-12">
-              <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-bold">
-                {user?.firstName?.[0]}{user?.lastName?.[0]}
-              </AvatarFallback>
-            </Avatar>
-            <div>
-              <h3 className="text-xl font-bold">{user?.firstName} {user?.lastName}</h3>
-              <p className="text-sm text-gray-600">{user?.email}</p>
-            </div>
-          </DialogTitle>
-        </DialogHeader>
+  const UserDetailDialog = ({ user, open, onClose }: { user: any, open: boolean, onClose: () => void }) => {
+    if (!user) return null;
+    
+    return (
+      <Dialog open={open} onOpenChange={onClose}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-3">
+              <Avatar className="w-12 h-12">
+                <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-bold">
+                  {user?.firstName?.[0] || 'U'}{user?.lastName?.[0] || 'U'}
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <h3 className="text-xl font-bold">{user?.firstName || 'Unknown'} {user?.lastName || 'User'}</h3>
+                <p className="text-sm text-gray-600">{user?.email || 'No email'}</p>
+              </div>
+            </DialogTitle>
+          </DialogHeader>
         
         <Tabs defaultValue="overview" className="w-full">
           <TabsList className="grid w-full grid-cols-3">
@@ -314,7 +317,7 @@ export default function UserManagement({ users, isLoading }: UserManagementProps
                       Active
                     </Badge>
                     <p className="text-sm text-gray-600">
-                      Member since {new Date(user?.createdAt).toLocaleDateString()}
+                      Member since {user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'Unknown'}
                     </p>
                   </div>
                 </CardContent>
@@ -328,7 +331,7 @@ export default function UserManagement({ users, isLoading }: UserManagementProps
                   <h4 className="font-semibold">Location</h4>
                 </div>
                 <p className="text-sm text-gray-600">
-                  {user?.city}, {user?.country}
+                  {user?.city || 'Unknown'}, {user?.country || 'Unknown'}
                 </p>
               </CardContent>
             </Card>
@@ -336,7 +339,7 @@ export default function UserManagement({ users, isLoading }: UserManagementProps
           
           <TabsContent value="balances" className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {user?.wallets?.map((wallet: any) => (
+              {user?.wallets && user.wallets.length > 0 ? user.wallets.map((wallet: any) => (
                 <Card key={wallet.id} className="border-l-4 border-l-orange-500">
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between mb-3">
@@ -375,7 +378,11 @@ export default function UserManagement({ users, isLoading }: UserManagementProps
                     </div>
                   </CardContent>
                 </Card>
-              ))}
+              )) : (
+                <div className="col-span-2 text-center py-8">
+                  <p className="text-gray-500">No cryptocurrency wallets found</p>
+                </div>
+              )}
             </div>
           </TabsContent>
           
@@ -471,7 +478,8 @@ export default function UserManagement({ users, isLoading }: UserManagementProps
         </Tabs>
       </DialogContent>
     </Dialog>
-  );
+    );
+  };
 
   return (
     <Card>
