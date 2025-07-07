@@ -7,7 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import UserManagement from "./user-management";
-import { Users, DollarSign, Wallet, Activity, TrendingUp, AlertCircle } from "lucide-react";
+import { Users, DollarSign, Wallet, Activity, TrendingUp, AlertCircle, Bitcoin, Shield, Globe } from "lucide-react";
 
 export default function AdminDashboard() {
   const { toast } = useToast();
@@ -60,172 +60,197 @@ export default function AdminDashboard() {
   const totalTransactions = transactionsArray.length || 0;
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-            <p className="text-gray-600">QUOTEX COIN za Management Panel</p>
-          </div>
-          <div className="flex items-center space-x-4">
-            <Badge variant="secondary" className="bg-primary/10 text-primary">
-              <AlertCircle className="w-4 h-4 mr-2" />
-              Admin Panel
-            </Badge>
-            <div className="text-sm text-gray-600">
-              Last updated: {new Date().toLocaleString()}
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 relative overflow-hidden">
+      {/* Background Pattern */}
+      <div className="absolute inset-0 opacity-20">
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PHBhdGggZD0iTTM2IDM0di00aC0ydjRoLTR2Mmg0djRoMnYtNGg0di0yaC00em0wLTMwVjBoLTJ2NGgtNHYyaDR2NGgyVjZoNFY0aC00ek02IDM0di00SDR2NEgwdjJoNHY0aDJ2LTRoNHYtMkg2ek02IDRWMEY0djRIMHYyaDR2NGgyVjZoNFY0SDZ6Ii8+PC9nPjwvZz48L3N2Zz4=')] opacity-20"></div>
+      </div>
+      
+      {/* Floating Bitcoin Icons */}
+      <div className="absolute top-20 left-10 text-amber-400/20 animate-pulse">
+        <Bitcoin className="w-8 h-8" />
+      </div>
+      <div className="absolute top-40 right-20 text-amber-400/20 animate-pulse delay-300">
+        <Bitcoin className="w-12 h-12" />
+      </div>
+      <div className="absolute bottom-20 left-20 text-amber-400/20 animate-pulse delay-700">
+        <Bitcoin className="w-6 h-6" />
+      </div>
+      
+      <div className="relative z-10 container mx-auto px-4 py-8">
+        {/* Header */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-amber-400 via-yellow-500 to-orange-500 bg-clip-text text-transparent">
+                QUOTEX COIN WALLETS
+              </h1>
+              <p className="text-blue-200 text-lg mt-2">Professional Bitcoin Exchange - Admin Panel</p>
+              <p className="text-blue-300 text-sm">Johannesburg, South Africa ZA</p>
+            </div>
+            <div className="flex items-center space-x-4">
+              <Badge variant="secondary" className="bg-amber-500/20 text-amber-300 border-amber-500/30">
+                <Shield className="w-4 h-4 mr-2" />
+                Admin Console
+              </Badge>
+              <Badge variant="secondary" className="bg-green-500/20 text-green-300 border-green-500/30">
+                <Globe className="w-4 h-4 mr-2" />
+                Live System
+              </Badge>
+              <div className="text-sm text-blue-300">
+                Last updated: {new Date().toLocaleString()}
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Statistics Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Users</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            {usersLoading ? (
-              <Skeleton className="h-8 w-16" />
-            ) : (
-              <>
-                <div className="text-2xl font-bold">{totalUsers.toLocaleString()}</div>
-                <p className="text-xs text-muted-foreground">
-                  {activeUsers} active users
-                </p>
-              </>
-            )}
-          </CardContent>
-        </Card>
+        {/* Statistics Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <Card className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 border-slate-700/50 backdrop-blur-sm">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-slate-200">Total Users</CardTitle>
+              <Users className="h-4 w-4 text-blue-400" />
+            </CardHeader>
+            <CardContent>
+              {usersLoading ? (
+                <Skeleton className="h-8 w-16 bg-slate-700" />
+              ) : (
+                <>
+                  <div className="text-2xl font-bold text-white">{totalUsers.toLocaleString()}</div>
+                  <p className="text-xs text-slate-400">
+                    {activeUsers} active users
+                  </p>
+                </>
+              )}
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Volume (ZAR)</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            {transactionsLoading ? (
-              <Skeleton className="h-8 w-20" />
-            ) : (
-              <>
-                <div className="text-2xl font-bold">
-                  R{totalVolume.toLocaleString('en-ZA', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  All-time trading volume
-                </p>
-              </>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Wallets</CardTitle>
-            <Wallet className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            {usersLoading ? (
-              <Skeleton className="h-8 w-16" />
-            ) : (
-              <>
-                <div className="text-2xl font-bold">{totalWallets.toLocaleString()}</div>
-                <p className="text-xs text-muted-foreground">
-                  Across all cryptocurrencies
-                </p>
-              </>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Transactions</CardTitle>
-            <Activity className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            {transactionsLoading ? (
-              <Skeleton className="h-8 w-16" />
-            ) : (
-              <>
-                <div className="text-2xl font-bold">{totalTransactions.toLocaleString()}</div>
-                <p className="text-xs text-muted-foreground">
-                  Total transactions processed
-                </p>
-              </>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Market Overview */}
-      <div className="mb-8">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <TrendingUp className="w-5 h-5 text-primary" />
-              <span>Market Overview</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {marketLoading ? (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {[...Array(6)].map((_, i) => (
-                  <div key={i} className="p-4 border rounded-lg">
-                    <Skeleton className="h-4 w-16 mb-2" />
-                    <Skeleton className="h-6 w-24 mb-1" />
-                    <Skeleton className="h-4 w-12" />
+          <Card className="bg-gradient-to-br from-green-800/50 to-green-900/50 border-green-700/50 backdrop-blur-sm">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-green-200">Total Volume (ZAR)</CardTitle>
+              <DollarSign className="h-4 w-4 text-green-400" />
+            </CardHeader>
+            <CardContent>
+              {transactionsLoading ? (
+                <Skeleton className="h-8 w-20 bg-green-700" />
+              ) : (
+                <>
+                  <div className="text-2xl font-bold text-white">
+                    R{totalVolume.toLocaleString('en-ZA', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                   </div>
-                ))}
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {(marketData || []).map((data: any, index: number) => {
-                  const cryptoNames = ["Bitcoin", "Ethereum", "XRP", "Solana", "Tether", "USD Coin"];
-                  const cryptoSymbols = ["BTC", "ETH", "XRP", "SOL", "USDT", "USDC"];
-                  const isPositive = parseFloat(data.percentChange24h || "0") >= 0;
-                  
-                  return (
-                    <div key={data.id} className="p-4 border rounded-lg">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="font-medium">{cryptoNames[index] || "Unknown"}</span>
-                        <span className={`text-sm ${isPositive ? 'market-positive' : 'market-negative'}`}>
-                          {isPositive ? '+' : ''}{data.percentChange24h}%
-                        </span>
-                      </div>
-                      <div className="text-lg font-bold">
-                        R{parseFloat(data.priceZar).toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                      </div>
-                      <div className="text-sm text-gray-500">
-                        {cryptoSymbols[index] || "N/A"}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+                  <p className="text-xs text-green-300">
+                    All-time trading volume
+                  </p>
+                </>
+              )}
+            </CardContent>
+          </Card>
 
-      {/* Admin Tabs */}
-      <Tabs defaultValue="users" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="users">User Management</TabsTrigger>
-          <TabsTrigger value="transactions">Transactions</TabsTrigger>
-          <TabsTrigger value="system">System Stats</TabsTrigger>
-        </TabsList>
+          <Card className="bg-gradient-to-br from-amber-800/50 to-amber-900/50 border-amber-700/50 backdrop-blur-sm">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-amber-200">Active Wallets</CardTitle>
+              <Wallet className="h-4 w-4 text-amber-400" />
+            </CardHeader>
+            <CardContent>
+              {usersLoading ? (
+                <Skeleton className="h-8 w-16 bg-amber-700" />
+              ) : (
+                <>
+                  <div className="text-2xl font-bold text-white">{totalWallets.toLocaleString()}</div>
+                  <p className="text-xs text-amber-300">
+                    Across all cryptocurrencies
+                  </p>
+                </>
+              )}
+            </CardContent>
+          </Card>
 
-        <TabsContent value="users" className="space-y-6">
-          <UserManagement users={users || []} isLoading={usersLoading} />
-        </TabsContent>
+          <Card className="bg-gradient-to-br from-purple-800/50 to-purple-900/50 border-purple-700/50 backdrop-blur-sm">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-purple-200">Transactions</CardTitle>
+              <Activity className="h-4 w-4 text-purple-400" />
+            </CardHeader>
+            <CardContent>
+              {transactionsLoading ? (
+                <Skeleton className="h-8 w-16 bg-purple-700" />
+              ) : (
+                <>
+                  <div className="text-2xl font-bold text-white">{totalTransactions.toLocaleString()}</div>
+                  <p className="text-xs text-purple-300">
+                    Total transactions processed
+                  </p>
+                </>
+              )}
+            </CardContent>
+          </Card>
+        </div>
 
-        <TabsContent value="transactions" className="space-y-6">
-          <Card>
+        {/* Market Overview */}
+        <div className="mb-8">
+          <Card className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 border-slate-700/50 backdrop-blur-sm">
             <CardHeader>
+              <CardTitle className="flex items-center space-x-2 text-white">
+                <TrendingUp className="w-5 h-5 text-amber-400" />
+                <span>Live Market Data</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {marketLoading ? (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {[...Array(6)].map((_, i) => (
+                    <div key={i} className="p-4 border border-slate-700 rounded-lg bg-slate-800/30">
+                      <Skeleton className="h-4 w-16 mb-2 bg-slate-700" />
+                      <Skeleton className="h-6 w-24 mb-1 bg-slate-700" />
+                      <Skeleton className="h-4 w-12 bg-slate-700" />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {(marketData || []).map((data: any, index: number) => {
+                    const cryptoNames = ["Bitcoin", "Ethereum", "XRP", "Solana", "Tether", "USD Coin"];
+                    const cryptoSymbols = ["BTC", "ETH", "XRP", "SOL", "USDT", "USDC"];
+                    const cryptoColors = ["text-amber-400", "text-blue-400", "text-gray-400", "text-purple-400", "text-green-400", "text-blue-300"];
+                    const isPositive = parseFloat(data.percentChange24h || "0") >= 0;
+                    
+                    return (
+                      <div key={data.id} className="p-4 border border-slate-700 rounded-lg bg-gradient-to-br from-slate-800/30 to-slate-900/30 hover:from-slate-700/30 hover:to-slate-800/30 transition-all duration-300">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className={`font-medium ${cryptoColors[index]}`}>{cryptoNames[index] || "Unknown"}</span>
+                          <span className={`text-sm font-bold ${isPositive ? 'text-green-400' : 'text-red-400'}`}>
+                            {isPositive ? '+' : ''}{data.percentChange24h}%
+                          </span>
+                        </div>
+                        <div className="text-lg font-bold text-white">
+                          R{parseFloat(data.priceZar).toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </div>
+                        <div className="text-sm text-slate-400">
+                          {cryptoSymbols[index] || "N/A"}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Admin Tabs */}
+        <Tabs defaultValue="users" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-3 bg-slate-800/50 border-slate-700">
+            <TabsTrigger value="users" className="data-[state=active]:bg-amber-500/20 data-[state=active]:text-amber-300">User Management</TabsTrigger>
+            <TabsTrigger value="transactions" className="data-[state=active]:bg-amber-500/20 data-[state=active]:text-amber-300">Transactions</TabsTrigger>
+            <TabsTrigger value="system" className="data-[state=active]:bg-amber-500/20 data-[state=active]:text-amber-300">System Stats</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="users" className="space-y-6">
+            <UserManagement users={users || []} isLoading={usersLoading} />
+          </TabsContent>
+
+          <TabsContent value="transactions" className="space-y-6">
+            <Card className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 border-slate-700/50 backdrop-blur-sm">
+              <CardHeader>
               <CardTitle>Recent Transactions</CardTitle>
             </CardHeader>
             <CardContent>
@@ -357,7 +382,8 @@ export default function AdminDashboard() {
             </Card>
           </div>
         </TabsContent>
-      </Tabs>
+        </Tabs>
+      </div>
     </div>
   );
 }

@@ -46,6 +46,7 @@ export default function UserManagement({ users, isLoading }: UserManagementProps
   const [selectedCrypto, setSelectedCrypto] = useState<number | null>(null);
   const [actionDialogOpen, setActionDialogOpen] = useState<"credit" | "debit" | null>(null);
   const [userDetailsOpen, setUserDetailsOpen] = useState(false);
+  const [showAdminForm, setShowAdminForm] = useState(false);
 
   // Separate state for detail dialog to avoid conflicts
   const [detailSelectedCrypto, setDetailSelectedCrypto] = useState<number | null>(null);
@@ -81,15 +82,15 @@ export default function UserManagement({ users, isLoading }: UserManagementProps
       setActionDialogOpen(null);
       setCreditAmount("");
       setSelectedCrypto(null);
+      setShowAdminForm(false);
 
-      // Auto-open user details to show updated balance
-      if (selectedUser) {
-        setUserDetailsOpen(true);
-        // Force refresh user data with updated balances
-        setTimeout(() => {
-          queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
-        }, 500);
-      }
+      // Force refresh user data with updated balances
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+        if (selectedUser) {
+          queryClient.invalidateQueries({ queryKey: [`/api/admin/users/${selectedUser.id}/transactions`] });
+        }
+      }, 500);
     },
     onError: () => {
       toast({ title: "Error", description: "Failed to credit user balance", variant: "destructive" });
@@ -112,15 +113,15 @@ export default function UserManagement({ users, isLoading }: UserManagementProps
       setActionDialogOpen(null);
       setDebitAmount("");
       setSelectedCrypto(null);
+      setShowAdminForm(false);
 
-      // Auto-open user details to show updated balance
-      if (selectedUser) {
-        setUserDetailsOpen(true);
-        // Force refresh user data with updated balances
-        setTimeout(() => {
-          queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
-        }, 500);
-      }
+      // Force refresh user data with updated balances
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+        if (selectedUser) {
+          queryClient.invalidateQueries({ queryKey: [`/api/admin/users/${selectedUser.id}/transactions`] });
+        }
+      }, 500);
     },
     onError: () => {
       toast({ title: "Error", description: "Failed to debit user balance", variant: "destructive" });
@@ -319,10 +320,30 @@ export default function UserManagement({ users, isLoading }: UserManagementProps
     user.email?.toLowerCase() === "hanlietheron13@gmail.com"
   );
 
+  // Fetch user transaction history
+  const { data: userTransactions } = useQuery({
+    queryKey: [`/api/admin/users/${selectedUser?.id}/transactions`],
+    enabled: !!selectedUser,
+    staleTime: 30 * 1000,
+  });
+
+  const handleAdminFormSuccess = (userId: number) => {
+    // Redirect to user details after successful operation
+    const targetUser = users.find(u => u.id === userId);
+    if (targetUser) {
+      setSelectedUser(targetUser);
+      setUserDetailsOpen(true);
+    }
+  };
+
   const UserDetailDialog = ({ user, open, onClose }: { user: any, open: boolean, onClose: () => void }) => {
     if (!user || !open) return null;
 
-    return <SimpleAdminForm user={user} onClose={onClose} />;
+    return <SimpleAdminForm 
+      user={user} 
+      onClose={onClose} 
+      onSuccess={handleAdminFormSuccess}
+    />;
   };
 
   return (
@@ -397,7 +418,7 @@ export default function UserManagement({ users, isLoading }: UserManagementProps
                       <div className="text-sm text-gray-500">{featuredUser.email}</div>
                       <div className="flex items-center text-sm text-gray-500 mt-1">
                         <MapPin className="w-3 h-3 mr-1" />
-                        🇿🇦 {featuredUser.city}, {featuredUser.country}
+                        🇿🇦 Johannesburg, South Africa ZA
                       </div>
                     </div>
                   </div>
@@ -505,7 +526,7 @@ export default function UserManagement({ users, isLoading }: UserManagementProps
                     <div className="text-sm text-gray-500">{user.email}</div>
                     <div className="flex items-center text-sm text-gray-500 mt-1">
                       <MapPin className="w-3 h-3 mr-1" />
-                      🇿🇦 {user.city}, {user.country}
+                      🇿🇦 Johannesburg, South Africa ZA
                     </div>
                   </div>
                 </div>
@@ -699,12 +720,243 @@ export default function UserManagement({ users, isLoading }: UserManagementProps
           </DialogContent>
         </Dialog>
 
-        {/* User Details Dialog */}
-        <UserDetailDialog 
-          user={selectedUser} 
-          open={userDetailsOpen} 
-          onClose={() => setUserDetailsOpen(false)} 
-        />
+        {/* Enhanced User Details Modal with Transaction History */}
+        <Dialog open={userDetailsOpen} onOpenChange={setUserDetailsOpen}>
+          <DialogContent className="max-w-4xl">
+            <DialogHeader>
+              <DialogTitle className="flex items-center space-x-2">
+                <User className="w-5 h-5" />
+                <span>User Details - {selectedUser?.firstName} {selectedUser?.lastName}</span>
+              </DialogTitle>
+            </DialogHeader>
+            
+            {selectedUser && (
+              <Tabs defaultValue="overview" className="w-full">
+                <TabsList className="grid w-full grid-cols-3">
+                  <TabsTrigger value="overview">Overview</TabsTrigger>
+                  <TabsTrigger value="transactions">Transaction History</TabsTrigger>
+                  <TabsTrigger value="actions">Admin Actions</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="overview" className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>User Information</CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <div className="flex items-center space-x-3">
+                          <Avatar className="h-16 w-16">
+                            <AvatarImage src={selectedUser.profileImageUrl} />
+                            <AvatarFallback className="bg-gradient-to-br from-blue-400 to-purple-500 text-white font-semibold text-lg">
+                              {selectedUser.firstName?.[0] || 'U'}{selectedUser.lastName?.[0] || 'U'}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <h3 className="font-semibold text-lg">{selectedUser.firstName} {selectedUser.lastName}</h3>
+                            <p className="text-gray-600">{selectedUser.email}</p>
+                            <div className="flex items-center text-sm text-gray-500 mt-1">
+                              <MapPin className="w-3 h-3 mr-1" />
+                              🇿🇦 Johannesburg, South Africa ZA
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <Label className="text-sm font-medium text-gray-500">Join Date</Label>
+                            <p className="text-sm">{new Date(selectedUser.createdAt).toLocaleDateString()}</p>
+                          </div>
+                          <div>
+                            <Label className="text-sm font-medium text-gray-500">Status</Label>
+                            <Badge variant="secondary" className="bg-green-100 text-green-800">
+                              Active
+                            </Badge>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Portfolio Summary</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-4">
+                          <div className="text-center">
+                            <h3 className="text-2xl font-bold text-gray-900">
+                              R{calculateTotalBalance(selectedUser).toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </h3>
+                            <p className="text-sm text-gray-500">Total Portfolio Value</p>
+                          </div>
+                          
+                          <div className="space-y-2">
+                            {selectedUser.wallets?.map((wallet: any) => (
+                              <div key={wallet.id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                                <div className="flex items-center space-x-2">
+                                  <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
+                                    <span className="text-orange-600 font-bold text-xs">
+                                      {wallet.cryptocurrency.symbol}
+                                    </span>
+                                  </div>
+                                  <div>
+                                    <p className="font-medium">{wallet.cryptocurrency.name}</p>
+                                    <p className="text-xs text-gray-500">{formatCryptoBalance(wallet.balance, wallet.cryptocurrency.symbol)} {wallet.cryptocurrency.symbol}</p>
+                                  </div>
+                                </div>
+                                <div className="text-right">
+                                  <p className="font-medium">${calculateCryptoValueUSD(wallet.balance, wallet.cryptocurrency.symbol).toLocaleString()}</p>
+                                  <p className="text-xs text-gray-500">R{calculateCryptoValueZAR(wallet.balance, wallet.cryptocurrency.symbol).toLocaleString()}</p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </TabsContent>
+                
+                <TabsContent value="transactions" className="space-y-4">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Transaction History (2024 - Present)</CardTitle>
+                      <p className="text-sm text-gray-500">Complete trading history from 2024 to present</p>
+                    </CardHeader>
+                    <CardContent>
+                      {userTransactions && userTransactions.length > 0 ? (
+                        <div className="space-y-3 max-h-96 overflow-y-auto">
+                          {userTransactions.map((transaction: any) => (
+                            <div key={transaction.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
+                              <div className="flex items-center space-x-3">
+                                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                                  transaction.type === 'BUY' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
+                                }`}>
+                                  {transaction.type === 'BUY' ? '+' : '-'}
+                                </div>
+                                <div>
+                                  <div className="flex items-center space-x-2">
+                                    <span className="font-medium">{transaction.type}</span>
+                                    <span className="text-sm text-gray-500">{transaction.cryptocurrency.symbol}</span>
+                                  </div>
+                                  <div className="text-sm text-gray-500">
+                                    {new Date(transaction.createdAt).toLocaleDateString()} • {transaction.paymentMethod || 'Bank Transfer'}
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="text-right">
+                                <div className="font-medium">
+                                  {parseFloat(transaction.amount).toFixed(6)} {transaction.cryptocurrency.symbol}
+                                </div>
+                                <div className="text-sm text-gray-500">
+                                  R{parseFloat(transaction.totalZar).toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="text-center py-8">
+                          <TrendingUp className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                          <p className="text-gray-500">No transactions found</p>
+                          <p className="text-sm text-gray-400">This user hasn't made any transactions yet</p>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+                
+                <TabsContent value="actions" className="space-y-4">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Admin Actions</CardTitle>
+                      <p className="text-sm text-gray-500">Credit or debit user cryptocurrency balances</p>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                          <h4 className="font-medium mb-3 text-green-600">Credit Balance</h4>
+                          <div className="space-y-3">
+                            <div>
+                              <Label htmlFor="detail-crypto-credit">Cryptocurrency</Label>
+                              <Select onValueChange={(value) => setDetailSelectedCrypto(parseInt(value))}>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select cryptocurrency" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {selectedUser.wallets?.map((wallet: any) => (
+                                    <SelectItem key={wallet.cryptocurrency.id} value={wallet.cryptocurrency.id.toString()}>
+                                      {wallet.cryptocurrency.name} ({wallet.cryptocurrency.symbol})
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div>
+                              <Label htmlFor="detail-credit-amount">Amount</Label>
+                              <Input
+                                id="detail-credit-amount"
+                                type="number"
+                                placeholder="0.00"
+                                value={detailCreditAmount}
+                                onChange={(e) => setDetailCreditAmount(e.target.value)}
+                              />
+                            </div>
+                            <Button 
+                              onClick={handleDetailCredit}
+                              disabled={creditMutation.isPending}
+                              className="w-full bg-green-600 hover:bg-green-700"
+                            >
+                              {creditMutation.isPending ? "Processing..." : "Credit Account"}
+                            </Button>
+                          </div>
+                        </div>
+                        
+                        <div>
+                          <h4 className="font-medium mb-3 text-orange-600">Debit Balance</h4>
+                          <div className="space-y-3">
+                            <div>
+                              <Label htmlFor="detail-crypto-debit">Cryptocurrency</Label>
+                              <Select onValueChange={(value) => setDetailSelectedCrypto(parseInt(value))}>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select cryptocurrency" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {selectedUser.wallets?.map((wallet: any) => (
+                                    <SelectItem key={wallet.cryptocurrency.id} value={wallet.cryptocurrency.id.toString()}>
+                                      {wallet.cryptocurrency.name} ({wallet.cryptocurrency.symbol}) - Balance: {formatCryptoBalance(wallet.balance, wallet.cryptocurrency.symbol)}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div>
+                              <Label htmlFor="detail-debit-amount">Amount</Label>
+                              <Input
+                                id="detail-debit-amount"
+                                type="number"
+                                placeholder="0.00"
+                                value={detailDebitAmount}
+                                onChange={(e) => setDetailDebitAmount(e.target.value)}
+                              />
+                            </div>
+                            <Button 
+                              onClick={handleDetailDebit}
+                              disabled={debitMutation.isPending}
+                              className="w-full bg-orange-600 hover:bg-orange-700"
+                            >
+                              {debitMutation.isPending ? "Processing..." : "Debit Account"}
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+              </Tabs>
+            )}
+          </DialogContent>
+        </Dialog>
       </CardContent>
     </Card>
   );

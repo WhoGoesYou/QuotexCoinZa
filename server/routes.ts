@@ -264,6 +264,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get specific user's transaction history for admin
+  app.get('/api/admin/users/:userId/transactions', isAdmin, async (req: any, res) => {
+    try {
+      const { userId } = req.params;
+      const transactions = await storage.getUserTransactions(parseInt(userId));
+      res.json(transactions);
+    } catch (error) {
+      console.error("Error fetching user transactions:", error);
+      res.status(500).json({ message: "Failed to fetch user transactions" });
+    }
+  });
+
   app.post('/api/admin/users/:targetUserId/credit', isAdmin, async (req: any, res) => {
     try {
       const adminId = req.admin.id;
