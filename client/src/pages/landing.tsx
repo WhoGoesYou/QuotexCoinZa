@@ -38,17 +38,17 @@ export default function Landing() {
           </div>
           <div className="flex items-center space-x-4">
             <Link href="/login">
-              <Button variant="ghost" className="text-white hover:bg-white/20">
+              <Button variant="ghost" className="text-white hover:bg-white/20 bg-transparent">
                 Login
               </Button>
             </Link>
             <Link href="/register">
-              <Button className="bg-gradient-to-r from-orange-500 to-yellow-500 hover:from-orange-600 hover:to-yellow-600">
+              <Button className="bg-gradient-to-r from-orange-500 to-yellow-500 hover:from-orange-600 hover:to-yellow-600 text-white">
                 Get Started
               </Button>
             </Link>
             <Link href="/admin/login">
-              <Button variant="outline" className="border-white/30 text-white hover:bg-white/20">
+              <Button variant="outline" className="border-white/30 text-white hover:bg-white/20 bg-transparent">
                 Admin
               </Button>
             </Link>
@@ -106,7 +106,7 @@ export default function Landing() {
               </Button>
             </Link>
             <Link href="/login">
-              <Button size="lg" variant="outline" className="border-white/30 text-white hover:bg-white/20 px-12 py-4 text-lg shadow-lg hover:shadow-xl transition-all duration-300">
+              <Button size="lg" variant="outline" className="border-white/30 text-white hover:bg-white/20 bg-transparent px-12 py-4 text-lg shadow-lg hover:shadow-xl transition-all duration-300">
                 🔐 Login to Account
               </Button>
             </Link>
@@ -299,7 +299,7 @@ export default function Landing() {
                 Your trusted gateway to digital wealth. Trade with confidence on our secure, professional platform.
               </p>
               <div className="flex space-x-4">
-                <Button variant="outline" size="sm" className="border-white/30 text-white hover:bg-white/20">
+                <Button variant="outline" size="sm" className="border-white/30 text-white hover:bg-white/20 bg-transparent">
                   Follow Us
                 </Button>
               </div>
@@ -320,10 +320,10 @@ export default function Landing() {
             <div>
               <h4 className="text-white font-semibold mb-4">Legal</h4>
               <ul className="space-y-2 text-white/70">
-                <li><a href="#" className="hover:text-white transition-colors">Terms of Service</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Privacy Policy</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Risk Disclosure</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Compliance</a></li>
+                <li><Link href="/terms" className="hover:text-white transition-colors">Terms of Service</Link></li>
+                <li><Link href="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link></li>
+                <li><Link href="/risk-disclosure" className="hover:text-white transition-colors">Risk Disclosure</Link></li>
+                <li><Link href="/compliance" className="hover:text-white transition-colors">Compliance</Link></li>
               </ul>
             </div>
 

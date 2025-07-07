@@ -13,6 +13,10 @@ import Dashboard from "@/pages/dashboard";
 import Trading from "@/pages/trading";
 import Admin from "@/pages/admin";
 import AdminLoginPage from "@/pages/admin-login";
+import Terms from "@/pages/terms";
+import Privacy from "@/pages/privacy";
+import RiskDisclosure from "@/pages/risk-disclosure";
+import Compliance from "@/pages/compliance";
 import Navbar from "@/components/navbar";
 
 function Router() {
@@ -36,6 +40,10 @@ function Router() {
       <Route path="/" component={Landing} />
       <Route path="/login" component={Login} />
       <Route path="/register" component={Register} />
+      <Route path="/terms" component={Terms} />
+      <Route path="/privacy" component={Privacy} />
+      <Route path="/risk-disclosure" component={RiskDisclosure} />
+      <Route path="/compliance" component={Compliance} />
       
       {/* Admin routes */}
       <Route path="/admin/login" component={AdminLoginPage} />
