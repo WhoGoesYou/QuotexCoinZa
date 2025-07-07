@@ -44,8 +44,21 @@ export default function WalletBalance({ wallets, marketData }: WalletBalanceProp
 
   const getMarketValue = (wallet: WalletWithCrypto) => {
     const market = marketData.find(m => m.cryptoId === wallet.cryptocurrency.id);
-    if (!market) return 0;
-    return parseFloat(wallet.balance) * parseFloat(market.priceZar);
+    if (!market) return { usd: 0, zar: 0, btc: 0 };
+    
+    const balance = parseFloat(wallet.balance);
+    const priceUsd = parseFloat(market.priceUsd);
+    const priceZar = parseFloat(market.priceZar);
+    
+    // Get BTC price for BTC equivalent calculation
+    const btcMarket = marketData.find(m => m.cryptoId === 1); // BTC is typically ID 1
+    const btcPriceUsd = btcMarket ? parseFloat(btcMarket.priceUsd) : 108748.97;
+    
+    return {
+      usd: balance * priceUsd,
+      zar: balance * priceZar,
+      btc: (balance * priceUsd) / btcPriceUsd,
+    };
   };
 
   const getPercentChange = (cryptoId: number) => {
@@ -53,7 +66,14 @@ export default function WalletBalance({ wallets, marketData }: WalletBalanceProp
     return market ? parseFloat(market.percentChange24h || "0") : 0;
   };
 
-  const totalPortfolioValue = wallets.reduce((total, wallet) => total + getMarketValue(wallet), 0);
+  const totalPortfolioValue = wallets.reduce((acc, wallet) => {
+    const value = getMarketValue(wallet);
+    return {
+      usd: acc.usd + value.usd,
+      zar: acc.zar + value.zar,
+      btc: acc.btc + value.btc,
+    };
+  }, { usd: 0, zar: 0, btc: 0 });
 
   if (wallets.length === 0) {
     return (
@@ -69,19 +89,50 @@ export default function WalletBalance({ wallets, marketData }: WalletBalanceProp
 
   return (
     <div className="space-y-6">
-      {/* Portfolio Summary */}
-      <Card className="bg-gradient-to-r from-primary/5 to-primary/10 border-primary/20">
+      {/* Multi-Currency Portfolio Summary */}
+      <Card className="bg-gradient-to-br from-orange-50 to-yellow-50 dark:from-orange-950 dark:to-yellow-950 border-orange-200">
         <CardContent className="p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 mb-1">Total Portfolio Value</p>
-              <p className="text-3xl font-bold text-gray-900">
-                R{totalPortfolioValue.toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-              </p>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-bold bg-gradient-to-r from-orange-600 to-yellow-600 bg-clip-text text-transparent">
+                Portfolio Overview
+              </h2>
+              <div className="text-right">
+                <p className="text-sm text-gray-600 mb-1">Active Wallets</p>
+                <p className="text-2xl font-semibold text-primary">{wallets.length}</p>
+              </div>
             </div>
-            <div className="text-right">
-              <p className="text-sm text-gray-600 mb-1">Active Wallets</p>
-              <p className="text-2xl font-semibold text-primary">{wallets.length}</p>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* USD Value */}
+              <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm">
+                <p className="text-sm text-gray-600 mb-1">USD Value</p>
+                <p className="text-2xl font-bold text-green-600">
+                  ${totalPortfolioValue.usd.toLocaleString(undefined, { 
+                    minimumFractionDigits: 2, 
+                    maximumFractionDigits: 2 
+                  })}
+                </p>
+              </div>
+              
+              {/* ZAR Value */}
+              <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm">
+                <p className="text-sm text-gray-600 mb-1">ZAR Value</p>
+                <p className="text-2xl font-bold text-blue-600">
+                  R{totalPortfolioValue.zar.toLocaleString('en-ZA', { 
+                    minimumFractionDigits: 2, 
+                    maximumFractionDigits: 2 
+                  })}
+                </p>
+              </div>
+              
+              {/* BTC Equivalent */}
+              <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm">
+                <p className="text-sm text-gray-600 mb-1">BTC Equivalent</p>
+                <p className="text-2xl font-bold text-orange-600">
+                  ₿{totalPortfolioValue.btc.toFixed(8)}
+                </p>
+              </div>
             </div>
           </div>
         </CardContent>
@@ -131,12 +182,18 @@ export default function WalletBalance({ wallets, marketData }: WalletBalanceProp
                     </div>
                   </div>
 
-                  <div className="text-right">
+                  <div className="text-right space-y-1">
                     <div className="font-bold text-lg">
                       {formatBalance(wallet.balance, wallet.cryptocurrency.symbol)} {wallet.cryptocurrency.symbol}
                     </div>
-                    <div className="text-sm text-gray-600">
-                      R{marketValue.toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    <div className="text-sm font-semibold text-green-600">
+                      ${marketValue.usd.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </div>
+                    <div className="text-sm text-blue-600">
+                      R{marketValue.zar.toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </div>
+                    <div className="text-xs text-orange-600">
+                      ₿{marketValue.btc.toFixed(8)}
                     </div>
                     <div className={`text-xs flex items-center justify-end mt-1 ${isPositive ? 'market-positive' : 'market-negative'}`}>
                       {isPositive ? (

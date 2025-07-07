@@ -85,9 +85,13 @@ export const transactions = pgTable("transactions", {
   amount: decimal("amount", { precision: 20, scale: 8 }).notNull(),
   price: decimal("price", { precision: 20, scale: 8 }),
   totalZar: decimal("total_zar", { precision: 20, scale: 2 }),
+  totalUsd: decimal("total_usd", { precision: 20, scale: 8 }),
   status: varchar("status", { length: 20 }).default("completed"), // 'pending', 'completed', 'failed'
   adminUserId: integer("admin_user_id"), // For admin actions
   description: text("description"),
+  paymentMethod: varchar("payment_method", { length: 50 }), // 'credit_card', 'debit_card', 'bank_transfer', 'wire_transfer', 'ach', 'wallet_address'
+  walletAddress: varchar("wallet_address", { length: 255 }), // For withdrawals
+  transactionHash: varchar("transaction_hash", { length: 255 }), // Blockchain transaction hash
   createdAt: timestamp("created_at").defaultNow(),
 });
 

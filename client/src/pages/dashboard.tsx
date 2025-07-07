@@ -10,6 +10,7 @@ import { isUnauthorizedError } from "@/lib/authUtils";
 import { websocketService } from "@/services/websocket";
 import CryptoCard from "@/components/crypto-card";
 import WalletBalance from "@/components/wallet-balance";
+import TransactionHistory from "@/components/transaction-history";
 import { TrendingUp, Wallet, Activity, DollarSign } from "lucide-react";
 
 export default function Dashboard() {
@@ -277,50 +278,7 @@ export default function Dashboard() {
         </TabsContent>
 
         <TabsContent value="transactions" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Transaction History</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {profile.transactions?.map((transaction) => (
-                  <div key={transaction.id} className="flex items-center justify-between p-4 border rounded-lg">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-                        <Activity className="w-5 h-5 text-primary" />
-                      </div>
-                      <div>
-                        <p className="font-medium">{transaction.cryptocurrency.name}</p>
-                        <p className="text-sm text-gray-500">
-                          {new Date(transaction.createdAt).toLocaleString()}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-medium">
-                        {transaction.amount} {transaction.cryptocurrency.symbol}
-                      </p>
-                      <Badge 
-                        variant="secondary" 
-                        className={`transaction-badge ${transaction.type}`}
-                      >
-                        {transaction.type.replace('_', ' ')}
-                      </Badge>
-                    </div>
-                  </div>
-                ))}
-                {(!profile.transactions || profile.transactions.length === 0) && (
-                  <div className="text-center py-8">
-                    <Activity className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                    <p className="text-gray-500">No transactions yet</p>
-                    <p className="text-sm text-gray-400">
-                      Start trading to see your transaction history
-                    </p>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+          <TransactionHistory transactions={profile.transactions || []} />
         </TabsContent>
       </Tabs>
     </div>

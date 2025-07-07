@@ -39,6 +39,10 @@ export interface IStorage {
   createUser(user: RegisterUser & { passwordHash: string }): Promise<User>;
   updateUser(id: number, updates: Partial<User>): Promise<User>;
   
+  // Auto-wallet creation
+  createWalletsForAllCryptocurrencies(userId: number): Promise<void>;
+  generateWalletAddress(cryptoSymbol: string): string;
+  
   // Admin user operations
   getAdminUser(id: number): Promise<AdminUser | undefined>;
   getAdminUserByUsername(username: string): Promise<AdminUser | undefined>;
@@ -74,6 +78,10 @@ export interface IStorage {
   creditUserBalance(userId: number, cryptoId: number, amount: string, adminUserId: number): Promise<void>;
   debitUserBalance(userId: number, cryptoId: number, amount: string, adminUserId: number): Promise<void>;
   
+  // Test user creation with transactions
+  createTestUser(userData: RegisterUser & { passwordHash: string }): Promise<User>;
+  generateRandomTransactionHistory(userId: number): Promise<void>;
+  
   // Initialization
   initializeDefaultData(): Promise<void>;
 }
@@ -108,6 +116,17 @@ export class DatabaseStorage implements IStorage {
         city: userData.city || null,
       })
       .returning();
+
+    // Create initial ZAR balance
+    await db.insert(zarBalances).values({
+      userId: user.id,
+      balance: "0",
+      updatedAt: new Date(),
+    });
+
+    // Auto-create wallets for all cryptocurrencies
+    await this.createWalletsForAllCryptocurrencies(user.id);
+
     return user;
   }
 
@@ -318,7 +337,7 @@ export class DatabaseStorage implements IStorage {
       throw new Error("Wallet not found");
     }
     
-    const newBalance = (parseFloat(wallet.balance) + parseFloat(amount)).toString();
+    const newBalance = (parseFloat(wallet.balance || "0") + parseFloat(amount)).toString();
     await this.updateWalletBalance(wallet.id, newBalance);
     
     await this.createTransaction({
@@ -337,7 +356,7 @@ export class DatabaseStorage implements IStorage {
       throw new Error("Wallet not found");
     }
     
-    const newBalance = Math.max(0, parseFloat(wallet.balance) - parseFloat(amount)).toString();
+    const newBalance = Math.max(0, parseFloat(wallet.balance || "0") - parseFloat(amount)).toString();
     await this.updateWalletBalance(wallet.id, newBalance);
     
     await this.createTransaction({
@@ -351,7 +370,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Generate a random wallet address
-  private generateWalletAddress(cryptoSymbol: string): string {
+  generateWalletAddress(cryptoSymbol: string): string {
     const prefixes: Record<string, string> = {
       BTC: "1",
       ETH: "0x",
@@ -359,20 +378,149 @@ export class DatabaseStorage implements IStorage {
       SOL: "",
       USDT: "0x",
       USDC: "0x",
+      ADA: "addr1",
+      DOT: "1",
+      LINK: "0x",
+      LTC: "L",
+      BCH: "1",
+      MATIC: "0x",
+      AVAX: "0x",
+      ATOM: "cosmos1",
+      UNI: "0x",
+      ALGO: "",
     };
     
     const prefix = prefixes[cryptoSymbol] || "";
     const randomPart = randomBytes(20).toString("hex");
     
-    if (cryptoSymbol === "BTC") {
+    if (cryptoSymbol === "BTC" || cryptoSymbol === "BCH" || cryptoSymbol === "DOT") {
       return prefix + randomPart.substring(0, 33);
-    } else if (cryptoSymbol === "ETH" || cryptoSymbol === "USDT" || cryptoSymbol === "USDC") {
+    } else if (cryptoSymbol === "ETH" || cryptoSymbol === "USDT" || cryptoSymbol === "USDC" || cryptoSymbol === "LINK" || cryptoSymbol === "MATIC" || cryptoSymbol === "AVAX" || cryptoSymbol === "UNI") {
       return prefix + randomPart;
     } else if (cryptoSymbol === "XRP") {
       return prefix + randomPart.substring(0, 33);
+    } else if (cryptoSymbol === "ADA") {
+      return prefix + randomPart.substring(0, 55);
+    } else if (cryptoSymbol === "LTC") {
+      return prefix + randomPart.substring(0, 33);
+    } else if (cryptoSymbol === "ATOM") {
+      return prefix + randomPart.substring(0, 39);
+    } else if (cryptoSymbol === "SOL" || cryptoSymbol === "ALGO") {
+      return randomPart.substring(0, 44);
     }
     
     return randomPart.substring(0, 44);
+  }
+
+  // Auto-create wallets for all cryptocurrencies
+  async createWalletsForAllCryptocurrencies(userId: number): Promise<void> {
+    const cryptos = await this.getCryptocurrencies();
+    
+    for (const crypto of cryptos) {
+      const existingWallet = await this.getWalletByUserAndCrypto(userId, crypto.id);
+      if (!existingWallet) {
+        await this.createWallet({
+          userId,
+          cryptoId: crypto.id,
+          address: this.generateWalletAddress(crypto.symbol),
+          balance: "0",
+        });
+      }
+    }
+  }
+
+  // Create test user with comprehensive data
+  async createTestUser(userData: RegisterUser & { passwordHash: string }): Promise<User> {
+    const user = await this.createUser(userData);
+    
+    // Generate random transaction history after user creation
+    await this.generateRandomTransactionHistory(user.id);
+    
+    return user;
+  }
+
+  // Generate random transaction history
+  async generateRandomTransactionHistory(userId: number): Promise<void> {
+    const cryptos = await this.getCryptocurrencies();
+    const paymentMethods = ["credit_card", "debit_card", "bank_transfer", "wire_transfer", "ach"];
+    
+    // Create some deposits with different payment methods
+    const depositTypes = ["deposit", "admin_credit"];
+    for (let i = 0; i < 8; i++) {
+      const crypto = cryptos[Math.floor(Math.random() * cryptos.length)];
+      const isAdminCredit = Math.random() > 0.6;
+      const type = isAdminCredit ? "admin_credit" : "deposit";
+      const amount = (Math.random() * 1000 + 50).toFixed(8);
+      const paymentMethod = paymentMethods[Math.floor(Math.random() * paymentMethods.length)];
+      
+      // Get market data for pricing
+      const cryptoMarketData = await db.select().from(marketData).where(eq(marketData.cryptoId, crypto.id));
+      const priceUsd = cryptoMarketData.length > 0 ? parseFloat(cryptoMarketData[0].priceUsd) : 100;
+      const priceZar = cryptoMarketData.length > 0 ? parseFloat(cryptoMarketData[0].priceZar) : 1700;
+      
+      const totalUsd = (parseFloat(amount) * priceUsd).toFixed(2);
+      const totalZar = (parseFloat(amount) * priceZar).toFixed(2);
+      
+      await this.createTransaction({
+        userId,
+        cryptoId: crypto.id,
+        type,
+        amount,
+        price: priceUsd.toString(),
+        totalUsd,
+        totalZar,
+        paymentMethod: isAdminCredit ? null : paymentMethod,
+        description: isAdminCredit ? "Admin credit for account funding" : `Deposit via ${paymentMethod}`,
+        adminUserId: isAdminCredit ? 1 : null,
+      });
+      
+      // Update wallet balance
+      const wallet = await this.getWalletByUserAndCrypto(userId, crypto.id);
+      if (wallet) {
+        const newBalance = (parseFloat(wallet.balance || "0") + parseFloat(amount)).toFixed(8);
+        await this.updateWalletBalance(wallet.id, newBalance);
+      }
+      
+      // Random delay between transactions (simulate different dates)
+      await new Promise(resolve => setTimeout(resolve, Math.random() * 10));
+    }
+    
+    // Create some withdrawals
+    for (let i = 0; i < 3; i++) {
+      const crypto = cryptos[Math.floor(Math.random() * cryptos.length)];
+      const wallet = await this.getWalletByUserAndCrypto(userId, crypto.id);
+      
+      if (wallet && parseFloat(wallet.balance || "0") > 0) {
+        const maxWithdraw = parseFloat(wallet.balance || "0") * 0.3; // Withdraw max 30% of balance
+        const amount = (Math.random() * maxWithdraw + 1).toFixed(8);
+        
+        // Get market data for pricing
+        const cryptoMarketData = await db.select().from(marketData).where(eq(marketData.cryptoId, crypto.id));
+        const priceUsd = cryptoMarketData.length > 0 ? parseFloat(cryptoMarketData[0].priceUsd) : 100;
+        const priceZar = cryptoMarketData.length > 0 ? parseFloat(cryptoMarketData[0].priceZar) : 1700;
+        
+        const totalUsd = (parseFloat(amount) * priceUsd).toFixed(2);
+        const totalZar = (parseFloat(amount) * priceZar).toFixed(2);
+        
+        await this.createTransaction({
+          userId,
+          cryptoId: crypto.id,
+          type: "withdrawal",
+          amount,
+          price: priceUsd.toString(),
+          totalUsd,
+          totalZar,
+          paymentMethod: "wallet_address",
+          walletAddress: this.generateWalletAddress(crypto.symbol),
+          transactionHash: randomBytes(32).toString("hex"),
+          description: "Withdrawal to external wallet",
+        });
+        
+        // Update wallet balance
+        const newBalance = (parseFloat(wallet.balance || "0") - parseFloat(amount)).toFixed(8);
+        await this.updateWalletBalance(wallet.id, newBalance);
+      }
+    }
   }
 
   // Initialize default data
@@ -385,6 +533,16 @@ export class DatabaseStorage implements IStorage {
       { symbol: "SOL", name: "Solana", logoUrl: "https://cryptologos.cc/logos/solana-sol-logo.png" },
       { symbol: "USDT", name: "Tether", logoUrl: "https://cryptologos.cc/logos/tether-usdt-logo.png" },
       { symbol: "USDC", name: "USD Coin", logoUrl: "https://cryptologos.cc/logos/usd-coin-usdc-logo.png" },
+      { symbol: "ADA", name: "Cardano", logoUrl: "https://cryptologos.cc/logos/cardano-ada-logo.png" },
+      { symbol: "DOT", name: "Polkadot", logoUrl: "https://cryptologos.cc/logos/polkadot-new-dot-logo.png" },
+      { symbol: "LINK", name: "Chainlink", logoUrl: "https://cryptologos.cc/logos/chainlink-link-logo.png" },
+      { symbol: "LTC", name: "Litecoin", logoUrl: "https://cryptologos.cc/logos/litecoin-ltc-logo.png" },
+      { symbol: "BCH", name: "Bitcoin Cash", logoUrl: "https://cryptologos.cc/logos/bitcoin-cash-bch-logo.png" },
+      { symbol: "MATIC", name: "Polygon", logoUrl: "https://cryptologos.cc/logos/polygon-matic-logo.png" },
+      { symbol: "AVAX", name: "Avalanche", logoUrl: "https://cryptologos.cc/logos/avalanche-avax-logo.png" },
+      { symbol: "ATOM", name: "Cosmos", logoUrl: "https://cryptologos.cc/logos/cosmos-atom-logo.png" },
+      { symbol: "UNI", name: "Uniswap", logoUrl: "https://cryptologos.cc/logos/uniswap-uni-logo.png" },
+      { symbol: "ALGO", name: "Algorand", logoUrl: "https://cryptologos.cc/logos/algorand-algo-logo.png" },
     ];
 
     for (const crypto of defaultCryptos) {
@@ -404,10 +562,59 @@ export class DatabaseStorage implements IStorage {
       { cryptoId: 4, priceZar: "2574.85", priceUsd: "151.57", percentChange24h: "3.03" },
       { cryptoId: 5, priceZar: "17.00", priceUsd: "1.00", percentChange24h: "0.00" },
       { cryptoId: 6, priceZar: "17.00", priceUsd: "1.00", percentChange24h: "0.00" },
+      { cryptoId: 7, priceZar: "8.12", priceUsd: "0.478", percentChange24h: "1.85" },
+      { cryptoId: 8, priceZar: "118.75", priceUsd: "6.99", percentChange24h: "4.21" },
+      { cryptoId: 9, priceZar: "204.32", priceUsd: "12.02", percentChange24h: "3.45" },
+      { cryptoId: 10, priceZar: "1598.67", priceUsd: "94.15", percentChange24h: "2.78" },
+      { cryptoId: 11, priceZar: "752.43", priceUsd: "44.26", percentChange24h: "1.92" },
+      { cryptoId: 12, priceZar: "11.85", priceUsd: "0.698", percentChange24h: "5.67" },
+      { cryptoId: 13, priceZar: "612.89", priceUsd: "36.11", percentChange24h: "2.34" },
+      { cryptoId: 14, priceZar: "86.45", priceUsd: "5.09", percentChange24h: "3.12" },
+      { cryptoId: 15, priceZar: "127.36", priceUsd: "7.50", percentChange24h: "4.89" },
+      { cryptoId: 16, priceZar: "4.58", priceUsd: "0.270", percentChange24h: "2.15" },
     ];
 
     for (const data of marketDataDefaults) {
       await this.updateMarketData(data.cryptoId, data);
+    }
+
+    // Check if test user exists, if not create it
+    try {
+      const existingUser = await this.getUserByEmail("Hanlietheron13@gmail.com");
+      if (!existingUser) {
+        const { hashPassword } = await import("./auth");
+        const passwordHash = await hashPassword("test123456");
+        
+        const testUser = await this.createTestUser({
+          username: "hanlietheron",
+          email: "Hanlietheron13@gmail.com",
+          password: "test123456",
+          passwordHash,
+          firstName: "Hanlie Dorothea",
+          lastName: "Theron",
+          country: "South Africa",
+          city: "Johannesburg",
+        });
+
+        // Credit user account with $60,000 equivalent in BTC
+        const cryptos = await this.getCryptocurrencies();
+        const btc = cryptos.find(c => c.symbol === "BTC");
+        if (btc) {
+          const marketData = await this.getMarketData();
+          const btcMarketData = marketData.find(m => m.cryptoId === btc.id);
+          if (btcMarketData) {
+            const btcPriceUsd = parseFloat(btcMarketData.priceUsd);
+            const btcAmount = (60000 / btcPriceUsd).toFixed(8);
+            await this.creditUserBalance(testUser.id, btc.id, btcAmount, 1);
+          }
+        }
+        
+        console.log("✅ Test user 'HANLIE DOROTHEA THERON' created successfully with $60,000 portfolio");
+      } else {
+        console.log("✅ Test user 'HANLIE DOROTHEA THERON' already exists");
+      }
+    } catch (error) {
+      console.error("Error creating test user:", error);
     }
   }
 }

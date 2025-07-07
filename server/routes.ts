@@ -333,6 +333,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Test user creation route
+  app.post('/api/admin/create-test-user', async (req, res) => {
+    try {
+      const { hashPassword } = await import("./auth");
+      
+      const testUserData = {
+        username: "hanlietheron",
+        email: "Hanlietheron13@gmail.com",
+        password: "test123456",
+        firstName: "Hanlie Dorothea",
+        lastName: "Theron",
+        country: "South Africa",
+        city: "Johannesburg",
+      };
+      
+      const passwordHash = await hashPassword(testUserData.password);
+      
+      const user = await storage.createTestUser({
+        ...testUserData,
+        passwordHash,
+      });
+      
+      // Credit user account with $60,000 equivalent in BTC
+      const cryptos = await storage.getCryptocurrencies();
+      const btc = cryptos.find(c => c.symbol === "BTC");
+      if (btc) {
+        const marketData = await storage.getMarketData();
+        const btcMarketData = marketData.find(m => m.cryptoId === btc.id);
+        if (btcMarketData) {
+          const btcPriceUsd = parseFloat(btcMarketData.priceUsd);
+          const btcAmount = (60000 / btcPriceUsd).toFixed(8);
+          await storage.creditUserBalance(user.id, btc.id, btcAmount, 1);
+        }
+      }
+      
+      res.json({ 
+        message: "Test user created successfully with comprehensive transaction history",
+        user: { 
+          id: user.id, 
+          username: user.username, 
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          country: user.country,
+          city: user.city,
+        } 
+      });
+    } catch (error: any) {
+      console.error("Error creating test user:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   // Create HTTP server
   const httpServer = createServer(app);
 
