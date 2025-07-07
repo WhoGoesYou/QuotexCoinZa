@@ -89,19 +89,25 @@ export default function UserManagement({ users, isLoading }: UserManagementProps
       setDetailCreditAmount("");
       setDetailSelectedCrypto(null);
       
-      // Force immediate refresh of all user data
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/market-data"] });
+      // Force complete data refresh - remove cache entirely
+      queryClient.removeQueries({ queryKey: ["/api/admin/users"] });
+      queryClient.removeQueries({ queryKey: ["/api/market-data"] });
       if (selectedUser) {
-        queryClient.invalidateQueries({ queryKey: [`/api/admin/users/${selectedUser.id}/transactions`] });
+        queryClient.removeQueries({ queryKey: [`/api/admin/users/${selectedUser.id}/transactions`] });
       }
+      
+      // Force immediate re-fetch
+      setTimeout(() => {
+        queryClient.refetchQueries({ queryKey: ["/api/admin/users"] });
+        queryClient.refetchQueries({ queryKey: ["/api/market-data"] });
+      }, 100);
       
       // Auto-open user details after brief delay to show updated balance
       setTimeout(() => {
         if (selectedUser) {
           setUserDetailsOpen(true);
         }
-      }, 800);
+      }, 1200);
     },
     onError: () => {
       toast({ title: "Error", description: "Failed to credit user balance", variant: "destructive" });
@@ -128,19 +134,25 @@ export default function UserManagement({ users, isLoading }: UserManagementProps
       setDetailDebitAmount("");
       setDetailSelectedCrypto(null);
       
-      // Force immediate refresh of all user data
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/market-data"] });
+      // Force complete data refresh - remove cache entirely
+      queryClient.removeQueries({ queryKey: ["/api/admin/users"] });
+      queryClient.removeQueries({ queryKey: ["/api/market-data"] });
       if (selectedUser) {
-        queryClient.invalidateQueries({ queryKey: [`/api/admin/users/${selectedUser.id}/transactions`] });
+        queryClient.removeQueries({ queryKey: [`/api/admin/users/${selectedUser.id}/transactions`] });
       }
+      
+      // Force immediate re-fetch
+      setTimeout(() => {
+        queryClient.refetchQueries({ queryKey: ["/api/admin/users"] });
+        queryClient.refetchQueries({ queryKey: ["/api/market-data"] });
+      }, 100);
       
       // Auto-open user details after brief delay to show updated balance
       setTimeout(() => {
         if (selectedUser) {
           setUserDetailsOpen(true);
         }
-      }, 800);
+      }, 1200);
     },
     onError: () => {
       toast({ title: "Error", description: "Failed to debit user balance", variant: "destructive" });
@@ -278,17 +290,18 @@ export default function UserManagement({ users, isLoading }: UserManagementProps
   };
 
   const handleRefresh = () => {
-    // Force refresh all data
-    queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
-    queryClient.invalidateQueries({ queryKey: ["/api/market-data"] });
-    queryClient.invalidateQueries({ queryKey: ["/api/admin/transactions"] });
+    // Force complete data refresh - remove cache entirely
+    queryClient.removeQueries({ queryKey: ["/api/admin/users"] });
+    queryClient.removeQueries({ queryKey: ["/api/market-data"] });
+    queryClient.removeQueries({ queryKey: ["/api/admin/transactions"] });
     if (selectedUser) {
-      queryClient.invalidateQueries({ queryKey: [`/api/admin/users/${selectedUser.id}/transactions`] });
+      queryClient.removeQueries({ queryKey: [`/api/admin/users/${selectedUser.id}/transactions`] });
     }
     
-    // Force remount the component by clearing cache entirely
+    // Force immediate re-fetch
     setTimeout(() => {
       queryClient.refetchQueries({ queryKey: ["/api/admin/users"] });
+      queryClient.refetchQueries({ queryKey: ["/api/market-data"] });
     }, 100);
     
     toast({ title: "Refreshed", description: "All user data and balances updated successfully" });
