@@ -30,7 +30,8 @@ import {
   ArrowDownCircle,
   DollarSign,
   User,
-  Users
+  Users,
+  RefreshCw
 } from "lucide-react";
 
 interface UserManagementProps {
@@ -79,20 +80,27 @@ export default function UserManagement({ users, isLoading }: UserManagementProps
       return response.json();
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
       toast({ title: "Success", description: "User balance credited successfully" });
+      
+      // Clear form states
       setActionDialogOpen(null);
       setCreditAmount("");
       setSelectedCrypto(null);
-      setShowAdminForm(false);
-
-      // Force refresh user data with updated balances
+      setDetailCreditAmount("");
+      setDetailSelectedCrypto(null);
+      
+      // Immediately refresh data
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      if (selectedUser) {
+        queryClient.invalidateQueries({ queryKey: [`/api/admin/users/${selectedUser.id}/transactions`] });
+      }
+      
+      // Auto-redirect to user details to show updated balance
       setTimeout(() => {
-        queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
         if (selectedUser) {
-          queryClient.invalidateQueries({ queryKey: [`/api/admin/users/${selectedUser.id}/transactions`] });
+          setUserDetailsOpen(true);
         }
-      }, 500);
+      }, 300);
     },
     onError: () => {
       toast({ title: "Error", description: "Failed to credit user balance", variant: "destructive" });
@@ -110,20 +118,27 @@ export default function UserManagement({ users, isLoading }: UserManagementProps
       return response.json();
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
       toast({ title: "Success", description: "User balance debited successfully" });
+      
+      // Clear form states
       setActionDialogOpen(null);
       setDebitAmount("");
       setSelectedCrypto(null);
-      setShowAdminForm(false);
-
-      // Force refresh user data with updated balances
+      setDetailDebitAmount("");
+      setDetailSelectedCrypto(null);
+      
+      // Immediately refresh data
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      if (selectedUser) {
+        queryClient.invalidateQueries({ queryKey: [`/api/admin/users/${selectedUser.id}/transactions`] });
+      }
+      
+      // Auto-redirect to user details to show updated balance
       setTimeout(() => {
-        queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
         if (selectedUser) {
-          queryClient.invalidateQueries({ queryKey: [`/api/admin/users/${selectedUser.id}/transactions`] });
+          setUserDetailsOpen(true);
         }
-      }, 500);
+      }, 300);
     },
     onError: () => {
       toast({ title: "Error", description: "Failed to debit user balance", variant: "destructive" });
@@ -260,6 +275,15 @@ export default function UserManagement({ users, isLoading }: UserManagementProps
     });
   };
 
+  const handleRefresh = () => {
+    queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+    queryClient.invalidateQueries({ queryKey: ["/api/market-data"] });
+    if (selectedUser) {
+      queryClient.invalidateQueries({ queryKey: [`/api/admin/users/${selectedUser.id}/transactions`] });
+    }
+    toast({ title: "Refreshed", description: "User data and balances updated" });
+  };
+
   const handleDetailDebit = () => {
     if (!selectedUser || !detailSelectedCrypto || !detailDebitAmount) {
       toast({
@@ -363,6 +387,14 @@ export default function UserManagement({ users, isLoading }: UserManagementProps
                 className="pl-10 w-64"
               />
             </div>
+            <Button 
+              onClick={handleRefresh}
+              variant="outline"
+              className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+            >
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Refresh
+            </Button>
             <Button className="bg-primary hover:bg-primary/90">
               <UserPlus className="w-4 h-4 mr-2" />
               Add User
@@ -905,7 +937,14 @@ export default function UserManagement({ users, isLoading }: UserManagementProps
                               />
                             </div>
                             <Button 
-                              onClick={handleDetailCredit}
+                              onClick={() => {
+                                handleDetailCredit();
+                                // Clear form and close after mutation
+                                setTimeout(() => {
+                                  setDetailCreditAmount("");
+                                  setDetailSelectedCrypto(null);
+                                }, 100);
+                              }}
                               disabled={creditMutation.isPending}
                               className="w-full bg-green-600 hover:bg-green-700"
                             >
@@ -943,7 +982,14 @@ export default function UserManagement({ users, isLoading }: UserManagementProps
                               />
                             </div>
                             <Button 
-                              onClick={handleDetailDebit}
+                              onClick={() => {
+                                handleDetailDebit();
+                                // Clear form and close after mutation
+                                setTimeout(() => {
+                                  setDetailDebitAmount("");
+                                  setDetailSelectedCrypto(null);
+                                }, 100);
+                              }}
                               disabled={debitMutation.isPending}
                               className="w-full bg-orange-600 hover:bg-orange-700"
                             >
