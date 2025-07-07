@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { StableDialog } from "@/components/ui/stable-dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -330,53 +331,29 @@ export default function UserManagement({ users, isLoading }: UserManagementProps
   const UserDetailDialog = ({ user, open, onClose }: { user: any, open: boolean, onClose: () => void }) => {
     if (!user) return null;
     
-    const handleClose = (isOpen: boolean) => {
-      // Only allow manual close via X button, not automatic close
-      if (!isOpen) {
-        // Clear detail dialog state when closing
-        setDetailSelectedCrypto(null);
-        setDetailCreditAmount("");
-        setDetailDebitAmount("");
-        onClose();
-      }
+    const handleClose = () => {
+      // Clear detail dialog state when closing
+      setDetailSelectedCrypto(null);
+      setDetailCreditAmount("");
+      setDetailDebitAmount("");
+      onClose();
     };
     
     return (
-      <Dialog open={open} onOpenChange={() => {}} modal={true}>
-        <DialogContent 
-          className="max-w-4xl max-h-[90vh] overflow-y-auto" 
-          onPointerDownOutside={(e) => e.preventDefault()} 
-          onInteractOutside={(e) => e.preventDefault()}
-          onEscapeKeyDown={(e) => e.preventDefault()}
-        >
-          <DialogHeader>
-            <DialogTitle className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <Avatar className="w-12 h-12">
-                  <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-bold">
-                    {user?.firstName?.[0] || 'U'}{user?.lastName?.[0] || 'U'}
-                  </AvatarFallback>
-                </Avatar>
-                <div>
-                  <h3 className="text-xl font-bold">{user?.firstName || 'Unknown'} {user?.lastName || 'User'}</h3>
-                  <p className="text-sm text-gray-600">{user?.email || 'No email'}</p>
-                </div>
+      <StableDialog open={open} onClose={handleClose}>
+          <div className="mb-6">
+            <div className="flex items-center gap-3">
+              <Avatar className="w-12 h-12">
+                <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-bold">
+                  {user?.firstName?.[0] || 'U'}{user?.lastName?.[0] || 'U'}
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <h3 className="text-xl font-bold">{user?.firstName || 'Unknown'} {user?.lastName || 'User'}</h3>
+                <p className="text-sm text-gray-600">{user?.email || 'No email'}</p>
               </div>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => {
-                  setDetailSelectedCrypto(null);
-                  setDetailCreditAmount("");
-                  setDetailDebitAmount("");
-                  onClose();
-                }}
-                className="ml-auto"
-              >
-                Close
-              </Button>
-            </DialogTitle>
-          </DialogHeader>
+            </div>
+          </div>
         
         <Tabs defaultValue="overview" className="w-full">
           <TabsList className="grid w-full grid-cols-3">
@@ -520,9 +497,14 @@ export default function UserManagement({ users, isLoading }: UserManagementProps
                       />
                     </div>
                     <Button 
-                      onClick={handleDetailCredit}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleDetailCredit();
+                      }}
                       className="w-full bg-green-600 hover:bg-green-700"
                       disabled={creditMutation.isPending}
+                      type="button"
                     >
                       {creditMutation.isPending ? "Processing..." : "Credit Balance"}
                     </Button>
@@ -564,9 +546,14 @@ export default function UserManagement({ users, isLoading }: UserManagementProps
                       />
                     </div>
                     <Button 
-                      onClick={handleDetailDebit}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleDetailDebit();
+                      }}
                       className="w-full bg-red-600 hover:bg-red-700"
                       disabled={debitMutation.isPending}
+                      type="button"
                     >
                       {debitMutation.isPending ? "Processing..." : "Debit Balance"}
                     </Button>
@@ -576,8 +563,7 @@ export default function UserManagement({ users, isLoading }: UserManagementProps
             </div>
           </TabsContent>
         </Tabs>
-      </DialogContent>
-    </Dialog>
+      </StableDialog>
     );
   };
 
