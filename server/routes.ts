@@ -84,28 +84,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin auth routes
-  app.post('/api/admin/auth/register', async (req, res) => {
-    try {
-      const adminData = registerAdminSchema.parse(req.body);
-      const admin = await registerAdmin(adminData);
-      req.session.adminId = admin.id;
-      res.json({ 
-        message: "Admin registration successful", 
-        admin: { 
-          id: admin.id, 
-          username: admin.username, 
-          email: admin.email,
-          firstName: admin.firstName,
-          lastName: admin.lastName,
-          role: admin.role
-        } 
-      });
-    } catch (error: any) {
-      res.status(400).json({ message: error.message });
-    }
-  });
-
-  app.post('/api/admin/auth/login', async (req, res) => {
+  app.post("/api/admin/auth/login", async (req, res) => {
     try {
       const credentials = loginAdminSchema.parse(req.body);
       const admin = await loginAdmin(credentials);
@@ -122,13 +101,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
         } 
       });
     } catch (error: any) {
-      res.status(401).json({ message: error.message });
+      res.status(400).json({ message: error.message });
     }
   });
 
-  app.post('/api/admin/auth/logout', (req, res) => {
-    req.session.adminId = undefined;
-    res.json({ message: "Admin logout successful" });
+  app.post("/api/admin/auth/logout", async (req, res) => {
+    try {
+      // Destroy the session
+      req.session.destroy((err) => {
+        if (err) {
+          console.error("Session destruction error:", err);
+          return res.status(500).json({ message: "Logout failed" });
+        }
+
+        // Clear the session cookie
+        res.clearCookie("connect.sid");
+        res.json({ message: "Admin logout successful" });
+      });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
   });
 
   app.get('/api/admin/auth/user', isAdmin, async (req, res) => {
@@ -170,7 +162,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const wallets = await storage.getUserWallets(userId);
       const zarBalance = await storage.getUserZarBalance(userId);
       const transactions = await storage.getUserTransactions(userId);
-      
+
       res.json({
         ...user,
         wallets,
@@ -281,24 +273,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const adminId = req.admin.id;
       const { targetUserId } = req.params;
       const { cryptoId, amount } = req.body;
-      
+
       console.log('Credit request:', { adminId, targetUserId, cryptoId, amount });
-      
+
       const schema = z.object({
         cryptoId: z.number(),
         amount: z.string().min(1),
       });
-      
+
       const validated = schema.parse({ cryptoId, amount });
-      
+
       // Check if user exists
       const targetUser = await storage.getUser(parseInt(targetUserId));
       if (!targetUser) {
         return res.status(404).json({ message: "Target user not found" });
       }
-      
+
       await storage.creditUserBalance(parseInt(targetUserId), validated.cryptoId, validated.amount, adminId);
-      
+
       // Broadcast balance update to user via WebSocket
       const updatedWallets = await storage.getUserWallets(parseInt(targetUserId));
       const updatedTransactions = await storage.getUserTransactions(parseInt(targetUserId));
@@ -306,14 +298,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         type: 'balance_updated',
         data: { wallets: updatedWallets, transactions: updatedTransactions }
       });
-      
+
       // Broadcast to all admins for real-time admin dashboard updates
       const allUsers = await storage.getAllUsers();
       broadcastToAdmins({
         type: 'user_balance_updated',
         data: { userId: parseInt(targetUserId), users: allUsers }
       });
-      
+
       console.log('Credit successful for user:', targetUserId);
       res.json({ 
         message: "User balance credited successfully",
@@ -334,24 +326,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const adminId = req.admin.id;
       const { targetUserId } = req.params;
       const { cryptoId, amount } = req.body;
-      
+
       console.log('Debit request:', { adminId, targetUserId, cryptoId, amount });
-      
+
       const schema = z.object({
         cryptoId: z.number(),
         amount: z.string().min(1),
       });
-      
+
       const validated = schema.parse({ cryptoId, amount });
-      
+
       // Check if user exists
       const targetUser = await storage.getUser(parseInt(targetUserId));
       if (!targetUser) {
         return res.status(404).json({ message: "Target user not found" });
       }
-      
+
       await storage.debitUserBalance(parseInt(targetUserId), validated.cryptoId, validated.amount, adminId);
-      
+
       // Broadcast balance update to user via WebSocket
       const updatedWallets = await storage.getUserWallets(parseInt(targetUserId));
       const updatedTransactions = await storage.getUserTransactions(parseInt(targetUserId));
@@ -359,14 +351,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         type: 'balance_updated',
         data: { wallets: updatedWallets, transactions: updatedTransactions }
       });
-      
+
       // Broadcast to all admins for real-time admin dashboard updates
       const allUsers = await storage.getAllUsers();
       broadcastToAdmins({
         type: 'user_balance_updated',
         data: { userId: parseInt(targetUserId), users: allUsers }
       });
-      
+
       console.log('Debit successful for user:', targetUserId);
       res.json({ 
         message: "User balance debited successfully",
@@ -396,7 +388,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/admin/create-test-user', async (req, res) => {
     try {
       const { hashPassword } = await import("./auth");
-      
+
       const testUserData = {
         username: "hanlietheron",
         email: "Hanlietheron13@gmail.com",
@@ -406,14 +398,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         country: "South Africa",
         city: "Johannesburg",
       };
-      
+
       const passwordHash = await hashPassword(testUserData.password);
-      
+
       const user = await storage.createTestUser({
         ...testUserData,
         passwordHash,
       });
-      
+
       // Credit user account with $60,000 equivalent in BTC
       const cryptos = await storage.getCryptocurrencies();
       const btc = cryptos.find(c => c.symbol === "BTC");
@@ -426,7 +418,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           await storage.creditUserBalance(user.id, btc.id, btcAmount, 1);
         }
       }
-      
+
       res.json({ 
         message: "Test user created successfully with comprehensive transaction history",
         user: { 
@@ -449,34 +441,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/admin/regenerate-user-history/:userId', isAdmin, async (req, res) => {
     try {
       const { userId } = req.params;
-      
+
       // Clear existing transactions for this user
       await storage.clearUserTransactions(parseInt(userId));
-      
+
       // Reset wallet balances to zero
       await storage.resetUserWalletBalances(parseInt(userId));
-      
+
       // Generate new comprehensive transaction history
       await storage.generateRandomTransactionHistory(parseInt(userId));
-      
+
       // Get updated user data
       const updatedUser = await storage.getUser(parseInt(userId));
       const updatedWallets = await storage.getUserWallets(parseInt(userId));
       const updatedTransactions = await storage.getUserTransactions(parseInt(userId));
-      
+
       // Broadcast update to user
       broadcastToUser(userId, {
         type: 'balance_updated',
         data: { wallets: updatedWallets, transactions: updatedTransactions }
       });
-      
+
       // Broadcast to all admins
       const allUsers = await storage.getAllUsers();
       broadcastToAdmins({
         type: 'user_balance_updated',
         data: { userId: parseInt(userId), users: allUsers }
       });
-      
+
       res.json({ 
         message: "User transaction history regenerated successfully",
         user: updatedUser,
@@ -503,18 +495,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     ws.on('message', async (message: Buffer) => {
       try {
         const data: WebSocketMessage = JSON.parse(message.toString());
-        
+
         if (data.type === 'authenticate') {
           // In a real implementation, you would validate the token here
           ws.userId = data.data.userId;
           ws.isAdmin = data.data.isAdmin;
-          
+
           // Add to clients map
           if (!clients.has(ws.userId)) {
             clients.set(ws.userId, []);
           }
           clients.get(ws.userId)!.push(ws);
-          
+
           ws.send(JSON.stringify({ type: 'authenticated', data: { success: true } }));
         }
       } catch (error) {
@@ -570,7 +562,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         type: 'market_data_update',
         data: marketData,
       };
-      
+
       // Broadcast to all connected clients
       wss.clients.forEach((client) => {
         if (client.readyState === WebSocket.OPEN) {

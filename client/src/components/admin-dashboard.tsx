@@ -102,11 +102,26 @@ export default function AdminDashboard() {
                 Last updated: {new Date().toLocaleString()}
               </div>
               <Button
-                onClick={() => {
-                  // Clear admin session
-                  document.cookie = "admin_session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-                  // Redirect to admin login
-                  window.location.href = "/admin";
+                onClick={async () => {
+                  try {
+                    // Call logout endpoint to destroy session
+                    const response = await fetch("/api/admin/auth/logout", {
+                      method: "POST",
+                      credentials: "include",
+                    });
+                    
+                    if (response.ok) {
+                      // Redirect to admin login after successful logout
+                      window.location.href = "/admin";
+                    } else {
+                      // Force redirect even if logout fails
+                      window.location.href = "/admin";
+                    }
+                  } catch (error) {
+                    console.error("Logout error:", error);
+                    // Force redirect even if there's an error
+                    window.location.href = "/admin";
+                  }
                 }}
                 variant="outline"
                 size="sm"
