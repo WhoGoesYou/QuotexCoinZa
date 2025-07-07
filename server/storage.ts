@@ -38,50 +38,50 @@ export interface IStorage {
   getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: RegisterUser & { passwordHash: string }): Promise<User>;
   updateUser(id: number, updates: Partial<User>): Promise<User>;
-  
+
   // Auto-wallet creation
   createWalletsForAllCryptocurrencies(userId: number): Promise<void>;
   generateWalletAddress(cryptoSymbol: string): string;
-  
+
   // Admin user operations
   getAdminUser(id: number): Promise<AdminUser | undefined>;
   getAdminUserByUsername(username: string): Promise<AdminUser | undefined>;
   getAdminUserByEmail(email: string): Promise<AdminUser | undefined>;
   createAdminUser(admin: RegisterAdmin & { passwordHash: string }): Promise<AdminUser>;
   updateAdminUser(id: number, updates: Partial<AdminUser>): Promise<AdminUser>;
-  
+
   // Cryptocurrency operations
   getCryptocurrencies(): Promise<Cryptocurrency[]>;
   createCryptocurrency(crypto: InsertCryptocurrency): Promise<Cryptocurrency>;
-  
+
   // Wallet operations
   getUserWallets(userId: number): Promise<WalletWithCrypto[]>;
   createWallet(wallet: InsertWallet): Promise<Wallet>;
   updateWalletBalance(walletId: number, balance: string): Promise<void>;
   getWalletByUserAndCrypto(userId: number, cryptoId: number): Promise<Wallet | undefined>;
-  
+
   // Transaction operations
   createTransaction(transaction: InsertTransaction): Promise<Transaction>;
   getUserTransactions(userId: number): Promise<TransactionWithCrypto[]>;
   getAllTransactions(): Promise<TransactionWithCrypto[]>;
-  
+
   // ZAR balance operations
   getUserZarBalance(userId: number): Promise<ZarBalance>;
   updateZarBalance(userId: number, balance: string): Promise<void>;
-  
+
   // Market data operations
   getMarketData(): Promise<MarketData[]>;
   updateMarketData(cryptoId: number, data: Partial<InsertMarketData>): Promise<void>;
-  
+
   // Admin operations
   getAllUsers(): Promise<UserWithProfile[]>;
   creditUserBalance(userId: number, cryptoId: number, amount: string, adminUserId: number): Promise<void>;
   debitUserBalance(userId: number, cryptoId: number, amount: string, adminUserId: number): Promise<void>;
-  
+
   // Test user creation with transactions
   createTestUser(userData: RegisterUser & { passwordHash: string }): Promise<User>;
   generateRandomTransactionHistory(userId: number): Promise<void>;
-  
+
   // Initialization
   initializeDefaultData(): Promise<void>;
 }
@@ -268,7 +268,7 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(zarBalances)
       .where(eq(zarBalances.userId, userId));
-    
+
     if (!balance) {
       const [newBalance] = await db
         .insert(zarBalances)
@@ -276,7 +276,7 @@ export class DatabaseStorage implements IStorage {
         .returning();
       return newBalance;
     }
-    
+
     return balance;
   }
 
@@ -314,12 +314,12 @@ export class DatabaseStorage implements IStorage {
   async getAllUsers(): Promise<UserWithProfile[]> {
     const allUsers = await db.select().from(users);
     const result: UserWithProfile[] = [];
-    
+
     for (const user of allUsers) {
       const userWallets = await this.getUserWallets(user.id);
       const userZarBalance = await this.getUserZarBalance(user.id);
       const userTransactions = await this.getUserTransactions(user.id);
-      
+
       result.push({
         ...user,
         wallets: userWallets,
@@ -327,7 +327,7 @@ export class DatabaseStorage implements IStorage {
         transactions: userTransactions,
       });
     }
-    
+
     return result;
   }
 
@@ -336,10 +336,10 @@ export class DatabaseStorage implements IStorage {
     if (!wallet) {
       throw new Error("Wallet not found");
     }
-    
+
     const newBalance = (parseFloat(wallet.balance || "0") + parseFloat(amount)).toString();
     await this.updateWalletBalance(wallet.id, newBalance);
-    
+
     await this.createTransaction({
       userId,
       cryptoId,
@@ -355,10 +355,10 @@ export class DatabaseStorage implements IStorage {
     if (!wallet) {
       throw new Error("Wallet not found");
     }
-    
+
     const newBalance = Math.max(0, parseFloat(wallet.balance || "0") - parseFloat(amount)).toString();
     await this.updateWalletBalance(wallet.id, newBalance);
-    
+
     await this.createTransaction({
       userId,
       cryptoId,
@@ -389,10 +389,10 @@ export class DatabaseStorage implements IStorage {
       UNI: "0x",
       ALGO: "",
     };
-    
+
     const prefix = prefixes[cryptoSymbol] || "";
     const randomPart = randomBytes(20).toString("hex");
-    
+
     if (cryptoSymbol === "BTC" || cryptoSymbol === "BCH" || cryptoSymbol === "DOT") {
       return prefix + randomPart.substring(0, 33);
     } else if (cryptoSymbol === "ETH" || cryptoSymbol === "USDT" || cryptoSymbol === "USDC" || cryptoSymbol === "LINK" || cryptoSymbol === "MATIC" || cryptoSymbol === "AVAX" || cryptoSymbol === "UNI") {
@@ -408,14 +408,14 @@ export class DatabaseStorage implements IStorage {
     } else if (cryptoSymbol === "SOL" || cryptoSymbol === "ALGO") {
       return randomPart.substring(0, 44);
     }
-    
+
     return randomPart.substring(0, 44);
   }
 
   // Auto-create wallets for all cryptocurrencies
   async createWalletsForAllCryptocurrencies(userId: number): Promise<void> {
     const cryptos = await this.getCryptocurrencies();
-    
+
     for (const crypto of cryptos) {
       const existingWallet = await this.getWalletByUserAndCrypto(userId, crypto.id);
       if (!existingWallet) {
@@ -432,10 +432,10 @@ export class DatabaseStorage implements IStorage {
   // Create test user with comprehensive data
   async createTestUser(userData: RegisterUser & { passwordHash: string }): Promise<User> {
     const user = await this.createUser(userData);
-    
+
     // Generate random transaction history after user creation
     await this.generateRandomTransactionHistory(user.id);
-    
+
     return user;
   }
 
@@ -443,7 +443,7 @@ export class DatabaseStorage implements IStorage {
   async generateRandomTransactionHistory(userId: number): Promise<void> {
     const cryptos = await this.getCryptocurrencies();
     const paymentMethods = ["credit_card", "debit_card", "bank_transfer", "wire_transfer", "ach"];
-    
+
     // Create some deposits with different payment methods
     const depositTypes = ["deposit", "admin_credit"];
     for (let i = 0; i < 8; i++) {
@@ -452,15 +452,15 @@ export class DatabaseStorage implements IStorage {
       const type = isAdminCredit ? "admin_credit" : "deposit";
       const amount = (Math.random() * 1000 + 50).toFixed(8);
       const paymentMethod = paymentMethods[Math.floor(Math.random() * paymentMethods.length)];
-      
+
       // Get market data for pricing
       const cryptoMarketData = await db.select().from(marketData).where(eq(marketData.cryptoId, crypto.id));
       const priceUsd = cryptoMarketData.length > 0 ? parseFloat(cryptoMarketData[0].priceUsd) : 100;
       const priceZar = cryptoMarketData.length > 0 ? parseFloat(cryptoMarketData[0].priceZar) : 1700;
-      
+
       const totalUsd = (parseFloat(amount) * priceUsd).toFixed(2);
       const totalZar = (parseFloat(amount) * priceZar).toFixed(2);
-      
+
       await this.createTransaction({
         userId,
         cryptoId: crypto.id,
@@ -473,35 +473,35 @@ export class DatabaseStorage implements IStorage {
         description: isAdminCredit ? "Admin credit for account funding" : `Deposit via ${paymentMethod}`,
         adminUserId: isAdminCredit ? 1 : null,
       });
-      
+
       // Update wallet balance
       const wallet = await this.getWalletByUserAndCrypto(userId, crypto.id);
       if (wallet) {
         const newBalance = (parseFloat(wallet.balance || "0") + parseFloat(amount)).toFixed(8);
         await this.updateWalletBalance(wallet.id, newBalance);
       }
-      
+
       // Random delay between transactions (simulate different dates)
       await new Promise(resolve => setTimeout(resolve, Math.random() * 10));
     }
-    
+
     // Create some withdrawals
     for (let i = 0; i < 3; i++) {
       const crypto = cryptos[Math.floor(Math.random() * cryptos.length)];
       const wallet = await this.getWalletByUserAndCrypto(userId, crypto.id);
-      
+
       if (wallet && parseFloat(wallet.balance || "0") > 0) {
         const maxWithdraw = parseFloat(wallet.balance || "0") * 0.3; // Withdraw max 30% of balance
         const amount = (Math.random() * maxWithdraw + 1).toFixed(8);
-        
+
         // Get market data for pricing
         const cryptoMarketData = await db.select().from(marketData).where(eq(marketData.cryptoId, crypto.id));
         const priceUsd = cryptoMarketData.length > 0 ? parseFloat(cryptoMarketData[0].priceUsd) : 100;
         const priceZar = cryptoMarketData.length > 0 ? parseFloat(cryptoMarketData[0].priceZar) : 1700;
-        
+
         const totalUsd = (parseFloat(amount) * priceUsd).toFixed(2);
         const totalZar = (parseFloat(amount) * priceZar).toFixed(2);
-        
+
         await this.createTransaction({
           userId,
           cryptoId: crypto.id,
@@ -515,7 +515,7 @@ export class DatabaseStorage implements IStorage {
           transactionHash: randomBytes(32).toString("hex"),
           description: "Withdrawal to external wallet",
         });
-        
+
         // Update wallet balance
         const newBalance = (parseFloat(wallet.balance || "0") - parseFloat(amount)).toFixed(8);
         await this.updateWalletBalance(wallet.id, newBalance);
@@ -525,75 +525,69 @@ export class DatabaseStorage implements IStorage {
 
   // Initialize default data
   async initializeDefaultData(): Promise<void> {
-    // Create default cryptocurrencies
-    const defaultCryptos = [
-      { symbol: "BTC", name: "Bitcoin", logoUrl: "https://cryptologos.cc/logos/bitcoin-btc-logo.png" },
-      { symbol: "ETH", name: "Ethereum", logoUrl: "https://cryptologos.cc/logos/ethereum-eth-logo.png" },
-      { symbol: "XRP", name: "XRP", logoUrl: "https://cryptologos.cc/logos/xrp-xrp-logo.png" },
-      { symbol: "SOL", name: "Solana", logoUrl: "https://cryptologos.cc/logos/solana-sol-logo.png" },
-      { symbol: "USDT", name: "Tether", logoUrl: "https://cryptologos.cc/logos/tether-usdt-logo.png" },
-      { symbol: "USDC", name: "USD Coin", logoUrl: "https://cryptologos.cc/logos/usd-coin-usdc-logo.png" },
-      { symbol: "ADA", name: "Cardano", logoUrl: "https://cryptologos.cc/logos/cardano-ada-logo.png" },
-      { symbol: "DOT", name: "Polkadot", logoUrl: "https://cryptologos.cc/logos/polkadot-new-dot-logo.png" },
-      { symbol: "LINK", name: "Chainlink", logoUrl: "https://cryptologos.cc/logos/chainlink-link-logo.png" },
-      { symbol: "LTC", name: "Litecoin", logoUrl: "https://cryptologos.cc/logos/litecoin-ltc-logo.png" },
-      { symbol: "BCH", name: "Bitcoin Cash", logoUrl: "https://cryptologos.cc/logos/bitcoin-cash-bch-logo.png" },
-      { symbol: "MATIC", name: "Polygon", logoUrl: "https://cryptologos.cc/logos/polygon-matic-logo.png" },
-      { symbol: "AVAX", name: "Avalanche", logoUrl: "https://cryptologos.cc/logos/avalanche-avax-logo.png" },
-      { symbol: "ATOM", name: "Cosmos", logoUrl: "https://cryptologos.cc/logos/cosmos-atom-logo.png" },
-      { symbol: "UNI", name: "Uniswap", logoUrl: "https://cryptologos.cc/logos/uniswap-uni-logo.png" },
-      { symbol: "ALGO", name: "Algorand", logoUrl: "https://cryptologos.cc/logos/algorand-algo-logo.png" },
-    ];
-
-    for (const crypto of defaultCryptos) {
-      const existing = await db.select().from(cryptocurrencies).where(eq(cryptocurrencies.symbol, crypto.symbol));
-      if (existing.length === 0) {
-        await this.createCryptocurrency(crypto);
-      }
-    }
-
-    // Users will be created through registration - no default users needed
-
-    // Initialize market data with ZAR prices
-    const marketDataDefaults = [
-      { cryptoId: 1, priceZar: "1847892.45", priceUsd: "108748.97", percentChange24h: "2.56" },
-      { cryptoId: 2, priceZar: "43295.68", priceUsd: "2546.86", percentChange24h: "1.62" },
-      { cryptoId: 3, priceZar: "38.56", priceUsd: "2.27", percentChange24h: "2.70" },
-      { cryptoId: 4, priceZar: "2574.85", priceUsd: "151.57", percentChange24h: "3.03" },
-      { cryptoId: 5, priceZar: "17.00", priceUsd: "1.00", percentChange24h: "0.00" },
-      { cryptoId: 6, priceZar: "17.00", priceUsd: "1.00", percentChange24h: "0.00" },
-      { cryptoId: 7, priceZar: "8.12", priceUsd: "0.478", percentChange24h: "1.85" },
-      { cryptoId: 8, priceZar: "118.75", priceUsd: "6.99", percentChange24h: "4.21" },
-      { cryptoId: 9, priceZar: "204.32", priceUsd: "12.02", percentChange24h: "3.45" },
-      { cryptoId: 10, priceZar: "1598.67", priceUsd: "94.15", percentChange24h: "2.78" },
-      { cryptoId: 11, priceZar: "752.43", priceUsd: "44.26", percentChange24h: "1.92" },
-      { cryptoId: 12, priceZar: "11.85", priceUsd: "0.698", percentChange24h: "5.67" },
-      { cryptoId: 13, priceZar: "612.89", priceUsd: "36.11", percentChange24h: "2.34" },
-      { cryptoId: 14, priceZar: "86.45", priceUsd: "5.09", percentChange24h: "3.12" },
-      { cryptoId: 15, priceZar: "127.36", priceUsd: "7.50", percentChange24h: "4.89" },
-      { cryptoId: 16, priceZar: "4.58", priceUsd: "0.270", percentChange24h: "2.15" },
-    ];
-
-    for (const data of marketDataDefaults) {
-      await this.updateMarketData(data.cryptoId, data);
-    }
-
-    // Check if test user exists, if not create it
     try {
-      const existingUser = await this.getUserByEmail("Hanlietheron13@gmail.com");
-      if (!existingUser) {
+      // Initialize cryptocurrencies
+      const existingCryptos = await this.getCryptocurrencies();
+      if (existingCryptos.length === 0) {
+        console.log("🔄 Initializing default cryptocurrencies...");
+        await this.createDefaultCryptocurrencies();
+      }
+
+      // Initialize market data
+      const existingMarketData = await this.getMarketData();
+      if (existingMarketData.length === 0) {
+        console.log("🔄 Initializing default market data...");
+        await this.createDefaultMarketData();
+      }
+
+      // Check if default admin exists
+      const defaultAdmin = await this.getAdminUserByUsername("admin");
+      if (!defaultAdmin) {
+        console.log("🔄 Creating default admin user...");
         const { hashPassword } = await import("./auth");
-        const passwordHash = await hashPassword("test123456");
-        
-        const testUser = await this.createTestUser({
+
+        const adminData = {
+          username: "admin",
+          email: "admin@admin.com",
+          password: "admin123",
+          firstName: "System",
+          lastName: "Administrator",
+          role: "super_admin" as const,
+        };
+
+        const passwordHash = await hashPassword(adminData.password);
+
+        await this.createAdminUser({
+          ...adminData,
+          passwordHash,
+        });
+
+        console.log("✅ Default admin user created successfully");
+      } else {
+        console.log("✅ Default admin user already exists");
+      }
+
+      // Check if test user exists
+      const testUser = await this.getUserByEmail("Hanlietheron13@gmail.com");
+      if (!testUser) {
+        console.log("🔄 Creating test user...");
+        const { hashPassword } = await import("./auth");
+
+        const testUserData = {
           username: "hanlietheron",
           email: "Hanlietheron13@gmail.com",
           password: "test123456",
-          passwordHash,
           firstName: "Hanlie Dorothea",
           lastName: "Theron",
           country: "South Africa",
           city: "Johannesburg",
+        };
+
+        const passwordHash = await hashPassword(testUserData.password);
+
+        const user = await this.createTestUser({
+          ...testUserData,
+          passwordHash,
         });
 
         // Credit user account with $60,000 equivalent in BTC
@@ -605,16 +599,19 @@ export class DatabaseStorage implements IStorage {
           if (btcMarketData) {
             const btcPriceUsd = parseFloat(btcMarketData.priceUsd);
             const btcAmount = (60000 / btcPriceUsd).toFixed(8);
-            await this.creditUserBalance(testUser.id, btc.id, btcAmount, 1);
+            await this.creditUserBalance(user.id, btc.id, btcAmount, 1);
           }
         }
-        
-        console.log("✅ Test user 'HANLIE DOROTHEA THERON' created successfully with $60,000 portfolio");
+
+        console.log("✅ Test user 'HANLIE DOROTHEA THERON' created successfully");
       } else {
         console.log("✅ Test user 'HANLIE DOROTHEA THERON' already exists");
       }
+
+      console.log("✅ Database initialization complete");
     } catch (error) {
-      console.error("Error creating test user:", error);
+      console.error("❌ Error during database initialization:", error);
+      throw error;
     }
   }
 }
