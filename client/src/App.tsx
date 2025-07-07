@@ -7,6 +7,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import NotFound from "@/pages/not-found";
 import Landing from "@/pages/landing";
+import Login from "@/pages/login";
+import Register from "@/pages/register";
 import Dashboard from "@/pages/dashboard";
 import Trading from "@/pages/trading";
 import Admin from "@/pages/admin";
@@ -17,12 +19,12 @@ function Router() {
   const { isAuthenticated, isLoading } = useAuth();
   const { isAuthenticated: isAdminAuthenticated, isLoading: isAdminLoading } = useAdminAuth();
 
-  if (isLoading && isAdminLoading) {
+  if (isLoading || isAdminLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading QUOTEX COIN WALLETS...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-400 mx-auto mb-4"></div>
+          <p className="text-white">Loading QUOTEX COIN WALLETS...</p>
         </div>
       </div>
     );
@@ -30,26 +32,39 @@ function Router() {
 
   return (
     <Switch>
-      {/* Admin routes - separate from regular user routes */}
-      <Route path="/admin/login" component={AdminLoginPage} />
+      {/* Public routes - always accessible */}
+      <Route path="/" component={Landing} />
+      <Route path="/login" component={Login} />
+      <Route path="/register" component={Register} />
       
-      {isAdminAuthenticated ? (
-        <Route path="/admin" component={Admin} />
-      ) : (
-        /* Regular user routes */
-        <>
-          {!isAuthenticated ? (
-            <Route path="/" component={Landing} />
-          ) : (
-            <>
-              <Navbar />
-              <Route path="/" component={Dashboard} />
-              <Route path="/dashboard" component={Dashboard} />
-              <Route path="/trading" component={Trading} />
-            </>
-          )}
-        </>
-      )}
+      {/* Admin routes */}
+      <Route path="/admin/login" component={AdminLoginPage} />
+      <Route path="/admin">
+        {isAdminAuthenticated ? <Admin /> : <AdminLoginPage />}
+      </Route>
+      
+      {/* Protected user routes */}
+      <Route path="/dashboard">
+        {isAuthenticated ? (
+          <>
+            <Navbar />
+            <Dashboard />
+          </>
+        ) : (
+          <Login />
+        )}
+      </Route>
+      
+      <Route path="/trading">
+        {isAuthenticated ? (
+          <>
+            <Navbar />
+            <Trading />
+          </>
+        ) : (
+          <Login />
+        )}
+      </Route>
       
       <Route component={NotFound} />
     </Switch>
