@@ -254,15 +254,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin routes
-  app.get('/api/admin/users', isAuthenticated, async (req: any, res) => {
+  app.get('/api/admin/users', isAdmin, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
-      const currentUser = await storage.getUser(userId);
-      
-      if (!currentUser?.isAdmin) {
-        return res.status(403).json({ message: "Admin access required" });
-      }
-      
       const users = await storage.getAllUsers();
       res.json(users);
     } catch (error) {
@@ -271,15 +264,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/admin/users/:targetUserId/credit', isAuthenticated, async (req: any, res) => {
+  app.post('/api/admin/users/:targetUserId/credit', isAdmin, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
-      const currentUser = await storage.getUser(userId);
-      
-      if (!currentUser?.isAdmin) {
-        return res.status(403).json({ message: "Admin access required" });
-      }
-      
+      const adminId = req.admin.id;
       const { targetUserId } = req.params;
       const { cryptoId, amount } = req.body;
       
@@ -290,7 +277,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const validated = schema.parse({ cryptoId, amount });
       
-      await storage.creditUserBalance(targetUserId, validated.cryptoId, validated.amount, userId);
+      await storage.creditUserBalance(parseInt(targetUserId), validated.cryptoId, validated.amount, adminId);
       
       res.json({ message: "User balance credited successfully" });
     } catch (error) {
@@ -299,15 +286,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/admin/users/:targetUserId/debit', isAuthenticated, async (req: any, res) => {
+  app.post('/api/admin/users/:targetUserId/debit', isAdmin, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
-      const currentUser = await storage.getUser(userId);
-      
-      if (!currentUser?.isAdmin) {
-        return res.status(403).json({ message: "Admin access required" });
-      }
-      
+      const adminId = req.admin.id;
       const { targetUserId } = req.params;
       const { cryptoId, amount } = req.body;
       
@@ -318,7 +299,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const validated = schema.parse({ cryptoId, amount });
       
-      await storage.debitUserBalance(targetUserId, validated.cryptoId, validated.amount, userId);
+      await storage.debitUserBalance(parseInt(targetUserId), validated.cryptoId, validated.amount, adminId);
       
       res.json({ message: "User balance debited successfully" });
     } catch (error) {
@@ -327,15 +308,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/admin/transactions', isAuthenticated, async (req: any, res) => {
+  app.get('/api/admin/transactions', isAdmin, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
-      const currentUser = await storage.getUser(userId);
-      
-      if (!currentUser?.isAdmin) {
-        return res.status(403).json({ message: "Admin access required" });
-      }
-      
       const transactions = await storage.getAllTransactions();
       res.json(transactions);
     } catch (error) {

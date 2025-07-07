@@ -15,16 +15,22 @@ export default function AdminDashboard() {
   const { data: users, isLoading: usersLoading, error: usersError } = useQuery({
     queryKey: ["/api/admin/users"],
     retry: false,
+    staleTime: 2 * 60 * 1000, // 2 minutes
+    gcTime: 5 * 60 * 1000, // 5 minutes
   });
 
   const { data: transactions, isLoading: transactionsLoading } = useQuery({
     queryKey: ["/api/admin/transactions"],
     retry: false,
+    staleTime: 1 * 60 * 1000, // 1 minute
+    gcTime: 3 * 60 * 1000, // 3 minutes
   });
 
   const { data: marketData, isLoading: marketLoading } = useQuery({
     queryKey: ["/api/market-data"],
     retry: false,
+    staleTime: 30 * 1000, // 30 seconds
+    gcTime: 60 * 1000, // 1 minute
   });
 
   if (usersError && isUnauthorizedError(usersError)) {
