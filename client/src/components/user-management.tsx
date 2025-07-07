@@ -167,6 +167,65 @@ export default function UserManagement({ users, isLoading }: UserManagementProps
     });
   };
 
+  // Bulk credit function to distribute $70,000 across all cryptocurrencies
+  const handleBulkCredit = async (user: any) => {
+    const totalUSD = 70000;
+    const cryptos = user.wallets || [];
+    
+    if (cryptos.length === 0) {
+      toast({
+        title: "No Wallets Found",
+        description: "User has no cryptocurrency wallets.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Distribute equally across all cryptos
+    const amountPerCrypto = totalUSD / cryptos.length;
+    
+    try {
+      // Process each cryptocurrency
+      for (const wallet of cryptos) {
+        const cryptoSymbol = wallet.cryptocurrency.symbol;
+        const marketInfo = marketDataMap[cryptoSymbol];
+        
+        if (marketInfo) {
+          const priceUsd = parseFloat(marketInfo.priceUsd);
+          const cryptoAmount = amountPerCrypto / priceUsd;
+          
+          await apiRequest("POST", `/api/admin/users/${user.id}/credit`, {
+            cryptoId: wallet.cryptocurrency.id,
+            amount: cryptoAmount.toString(),
+          });
+        }
+      }
+      
+      toast({
+        title: "Bulk Credit Successful",
+        description: `Successfully credited $${totalUSD.toLocaleString()} across all cryptocurrencies.`,
+      });
+      
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/transactions"] });
+      
+    } catch (error: any) {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Session Expired",
+          description: "Please log in again to continue.",
+          variant: "destructive",
+        });
+        return;
+      }
+      toast({
+        title: "Bulk Credit Failed",
+        description: "Failed to credit user balances. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const calculateTotalBalance = (user: any) => {
     return user.wallets?.reduce((total: number, wallet: any) => {
       const cryptoSymbol = wallet.cryptocurrency?.symbol;
@@ -459,7 +518,13 @@ export default function UserManagement({ users, isLoading }: UserManagementProps
           <div className="space-y-4">
             {/* Featured User First */}
             {featuredUser && (
-              <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-lg">
+              <div 
+                className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-lg hover:bg-yellow-100 transition-colors cursor-pointer"
+                onClick={() => {
+                  setSelectedUser(featuredUser);
+                  setUserDetailsOpen(true);
+                }}
+              >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
                     <Avatar className="h-12 w-12">
@@ -512,7 +577,8 @@ export default function UserManagement({ users, isLoading }: UserManagementProps
                       size="sm"
                       variant="outline"
                       className="text-green-600 hover:text-green-700 hover:bg-green-50"
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.stopPropagation();
                         setSelectedUser(featuredUser);
                         setActionDialogOpen("credit");
                       }}
@@ -524,7 +590,8 @@ export default function UserManagement({ users, isLoading }: UserManagementProps
                       size="sm"
                       variant="outline"
                       className="text-orange-600 hover:text-orange-700 hover:bg-orange-50"
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.stopPropagation();
                         setSelectedUser(featuredUser);
                         setActionDialogOpen("debit");
                       }}
@@ -535,8 +602,21 @@ export default function UserManagement({ users, isLoading }: UserManagementProps
                     <Button
                       size="sm"
                       variant="outline"
+                      className="text-purple-600 hover:text-purple-700 hover:bg-purple-50"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleBulkCredit(featuredUser);
+                      }}
+                      title="Credit $70K to All Cryptos"
+                    >
+                      <DollarSign className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
                       className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.stopPropagation();
                         setSelectedUser(featuredUser);
                         setUserDetailsOpen(true);
                       }}
