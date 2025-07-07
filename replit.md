@@ -105,9 +105,15 @@ Changelog:
   * Successfully migrated project with PostgreSQL database setup
   * Created stunning landing page with professional cryptocurrency trading design
   * Implemented separate login/register pages with proper routing structure
-  * Enhanced UI components with missing shadcn/ui components (Badge, Skeleton, Avatar, Sheet)
+  * Enhanced UI components with missing shadcn/ui components (Badge, Skeleton, Avatar, Sheet, Dialog)
   * Fixed authentication flow and routing logic
   * Admin login properly accessible via /admin/login route
+  * Added floating help widget with 24/7 support features and FAQ system
+  * Integrated professional contact support: support.quotex@quotexes.online, +1 (672) 380-5729
+  * Enhanced hero section with live market ticker and trust indicators
+  * Added comprehensive footer with legal links and support information
+  * Implemented professional Bitcoin exchange styling with animations
+  * Enhanced security and trust sections with visual indicators
   * Improved security with proper client/server separation
   * Project now runs cleanly in Replit environment without errors
 ```
