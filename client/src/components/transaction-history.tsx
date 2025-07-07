@@ -175,18 +175,20 @@ export default function TransactionHistory({ transactions }: TransactionHistoryP
                       
                       {(transaction.walletAddress || transaction.wallet_address) && (
                         <div className="flex items-center gap-2">
-                          <span className="font-medium">To Address:</span>
-                          <span className="font-mono text-xs">
-                            {(transaction.walletAddress || transaction.wallet_address).substring(0, 20)}...
-                          </span>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="h-6 w-6 p-0"
-                            onClick={() => copyToClipboard((transaction.walletAddress || transaction.wallet_address)!, "Wallet address")}
-                          >
-                            <Copy className="w-3 h-3" />
-                          </Button>
+                          <span className="font-medium">Wallet Address:</span>
+                          <div className="flex items-center gap-1 bg-orange-50 dark:bg-orange-900/20 px-2 py-1 rounded border border-orange-200 dark:border-orange-800">
+                            <span className="font-mono text-xs text-orange-800 dark:text-orange-200">
+                              {(transaction.walletAddress || transaction.wallet_address).substring(0, 12)}...{(transaction.walletAddress || transaction.wallet_address).substring(-8)}
+                            </span>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-5 w-5 p-0 hover:bg-orange-100 dark:hover:bg-orange-800/50"
+                              onClick={() => copyToClipboard((transaction.walletAddress || transaction.wallet_address)!, "Wallet address")}
+                            >
+                              <Copy className="w-3 h-3 text-orange-600 dark:text-orange-300" />
+                            </Button>
+                          </div>
                         </div>
                       )}
                       

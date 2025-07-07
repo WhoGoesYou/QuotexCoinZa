@@ -23,7 +23,7 @@ export default function WalletBalance({ wallets, marketData }: WalletBalanceProp
 
   const formatAddress = (address: string) => {
     if (address.length <= 12) return address;
-    return `${address.slice(0, 6)}...${address.slice(-6)}`;
+    return `${address.slice(0, 8)}...${address.slice(-8)}`;
   };
 
   const copyToClipboard = async (text: string, type: string) => {
@@ -167,17 +167,19 @@ export default function WalletBalance({ wallets, marketData }: WalletBalanceProp
                         )}
                       </div>
                       <div className="flex items-center space-x-2 mt-1">
-                        <p className="text-sm text-gray-500 font-mono">
-                          {formatAddress(wallet.address)}
-                        </p>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="h-6 w-6 p-0 hover:bg-gray-100"
-                          onClick={() => copyToClipboard(wallet.address, "Wallet address")}
-                        >
-                          <Copy className="w-3 h-3" />
-                        </Button>
+                        <div className="flex items-center gap-1 bg-orange-50 dark:bg-orange-900/20 px-2 py-1 rounded border border-orange-200 dark:border-orange-800">
+                          <p className="text-xs text-orange-800 dark:text-orange-200 font-mono">
+                            {formatAddress(wallet.address)}
+                          </p>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-4 w-4 p-0 hover:bg-orange-100 dark:hover:bg-orange-800/50"
+                            onClick={() => copyToClipboard(wallet.address, "Wallet address")}
+                          >
+                            <Copy className="w-3 h-3 text-orange-600 dark:text-orange-300" />
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   </div>
