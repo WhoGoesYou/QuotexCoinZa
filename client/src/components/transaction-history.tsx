@@ -122,18 +122,18 @@ export default function TransactionHistory({ transactions }: TransactionHistoryP
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+    <Card className="bg-gradient-to-br from-white to-orange-50/30 dark:from-gray-900 dark:to-orange-950/30 border-orange-200 dark:border-orange-800">
+      <CardHeader className="bg-gradient-to-r from-orange-50 to-yellow-50 dark:from-orange-950 dark:to-yellow-950 border-b border-orange-200 dark:border-orange-800">
+        <CardTitle className="flex items-center gap-2 text-orange-800 dark:text-orange-200">
           <Wallet className="w-5 h-5" />
           Transaction History ({transactions.length})
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="bg-white/50 dark:bg-gray-900/50">
         <div className="space-y-4">
           {transactions.map((transaction, index) => (
             <div key={transaction.id}>
-              <div className="flex items-start justify-between p-4 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors">
+              <div className="flex items-start justify-between p-4 hover:bg-gradient-to-r hover:from-orange-50 hover:to-yellow-50 dark:hover:from-orange-900/20 dark:hover:to-yellow-900/20 rounded-lg transition-all duration-200 border border-transparent hover:border-orange-200 dark:hover:border-orange-800">
                 <div className="flex items-start space-x-4">
                   {/* Transaction Icon */}
                   <div className="mt-1">

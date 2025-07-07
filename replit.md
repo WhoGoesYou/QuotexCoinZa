@@ -169,6 +169,17 @@ Changelog:
   * FIXED: Generated unique wallet addresses for each cryptocurrency type while keeping Bitcoin address as specified
   * FIXED: Created diverse transaction portfolio with Ethereum, XRP, Solana, USDT, and USDC variations
   * Enhanced transaction realism with varied wallet addresses per crypto type and authentic timestamps
+- July 07, 2025. Enhanced Wallet Address Display and Transaction History:
+  * Updated Hanlie Theron's Bitcoin balance from $85,000 to $75,000 (2.5 BTC)
+  * Set her Ethereum balance to $0 as requested
+  * Configured Hanlie's specific Bitcoin wallet address: bc1q6ml4000ksk4zcn3jk6ml6c3nra8280kd4fntnz
+  * Generated proper wallet addresses for all other cryptocurrencies with realistic formats
+  * Enhanced transaction history component with Bitcoin-styled wallet address display
+  * Added orange-themed wallet address badges with copy-to-clipboard functionality
+  * Updated storage layer to properly return wallet addresses in transaction data
+  * Enhanced background styling with professional Bitcoin exchange gradient themes
+  * Fixed wallet address display in both transaction history and wallet balance components
+  * All wallet addresses now properly show in transaction history with enhanced Bitcoin vibes
 - July 07, 2025. Enhanced Wallet Display and User Experience:
   * Updated Hanlie Theron's Bitcoin balance to $75,000 as requested
   * Set her ETH balance to $0.74 and implemented proper wallet address display

@@ -250,6 +250,9 @@ export class DatabaseStorage implements IStorage {
       .then(rows => rows.map(row => ({
         ...row.transactions,
         cryptocurrency: row.cryptocurrencies,
+        wallet_address: row.transactions.walletAddress,
+        transaction_hash: row.transactions.transactionHash,
+        payment_method: row.transactions.paymentMethod,
       })));
   }
 
@@ -262,6 +265,9 @@ export class DatabaseStorage implements IStorage {
       .then(rows => rows.map(row => ({
         ...row.transactions,
         cryptocurrency: row.cryptocurrencies,
+        wallet_address: row.transactions.walletAddress,
+        transaction_hash: row.transactions.transactionHash,
+        payment_method: row.transactions.paymentMethod,
       })));
   }
 
