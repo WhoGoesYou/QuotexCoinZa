@@ -154,6 +154,16 @@ Changelog:
   * Generated realistic wallet addresses for all cryptocurrencies
   * Updated transaction history to show proper withdrawal records with dates and amounts
   * All cryptocurrency balances now display accurate USD/ZAR conversions using live market data
+- July 07, 2025. Enhanced Admin Dashboard with Cryptocurrency Filtering and Bitcoin Vibes:
+  * Fixed wallet address display issues in transaction history components
+  * Made portfolio summary cryptocurrencies clickable for transaction filtering
+  * Added comprehensive transaction filtering by cryptocurrency type
+  * Enhanced transaction display with wallet addresses, transaction hashes, and payment methods
+  * Implemented professional Bitcoin exchange styling with orange/yellow gradients
+  * Added copy-to-clipboard functionality for wallet addresses
+  * Created filterable transaction history showing specific crypto transactions
+  * All Bitcoin withdrawals now properly display with wallet address bc1q6ml4000ksk4zcn3jk6ml6c3nra8280kd4fntnz
+  * Enhanced user experience with clickable crypto icons and detailed transaction information
 ```
 
 ## User Preferences

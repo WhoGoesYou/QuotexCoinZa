@@ -31,7 +31,8 @@ import {
   DollarSign,
   User,
   Users,
-  RefreshCw
+  RefreshCw,
+  Copy
 } from "lucide-react";
 
 interface UserManagementProps {
@@ -49,6 +50,7 @@ export default function UserManagement({ users, isLoading }: UserManagementProps
   const [selectedCrypto, setSelectedCrypto] = useState<number | null>(null);
   const [actionDialogOpen, setActionDialogOpen] = useState<"credit" | "debit" | null>(null);
   const [userDetailsOpen, setUserDetailsOpen] = useState(false);
+  const [selectedCryptoFilter, setSelectedCryptoFilter] = useState<number | null>(null);
   const [showAdminForm, setShowAdminForm] = useState(false);
 
   // Separate state for detail dialog to avoid conflicts
@@ -652,6 +654,7 @@ export default function UserManagement({ users, isLoading }: UserManagementProps
                     className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
                     onClick={() => {
                       setSelectedUser(user);
+                      setSelectedCryptoFilter(null); // Reset filter when opening user details
                       setUserDetailsOpen(true);
                     }}
                     title="View Details"
@@ -860,23 +863,34 @@ export default function UserManagement({ users, isLoading }: UserManagementProps
                           
                           <div className="space-y-2">
                             {selectedUser.wallets?.map((wallet: any) => (
-                              <div key={wallet.id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                                <div className="flex items-center space-x-2">
-                                  <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
-                                    <span className="text-orange-600 font-bold text-xs">
+                              <Button
+                                key={wallet.id}
+                                variant="ghost"
+                                className={`flex items-center justify-between p-3 w-full h-auto rounded-lg border transition-all hover:bg-gradient-to-r hover:from-orange-50 hover:to-yellow-50 hover:border-orange-200 ${
+                                  selectedCryptoFilter === wallet.cryptoId 
+                                    ? 'bg-gradient-to-r from-orange-100 to-yellow-100 border-orange-300' 
+                                    : 'bg-gray-50 border-gray-200'
+                                }`}
+                                onClick={() => {
+                                  setSelectedCryptoFilter(selectedCryptoFilter === wallet.cryptoId ? null : wallet.cryptoId);
+                                }}
+                              >
+                                <div className="flex items-center space-x-3">
+                                  <div className="w-10 h-10 bg-gradient-to-br from-orange-400 to-yellow-500 rounded-full flex items-center justify-center shadow-md">
+                                    <span className="text-white font-bold text-sm">
                                       {cryptoSymbolMap[wallet.cryptoId]}
                                     </span>
                                   </div>
-                                  <div>
-                                    <p className="font-medium">{cryptoSymbolMap[wallet.cryptoId]}</p>
+                                  <div className="text-left">
+                                    <p className="font-semibold text-gray-900">{cryptoSymbolMap[wallet.cryptoId]}</p>
                                     <p className="text-xs text-gray-500">{formatCryptoBalance(wallet.balance, wallet.cryptoId)} {cryptoSymbolMap[wallet.cryptoId]}</p>
                                   </div>
                                 </div>
                                 <div className="text-right">
-                                  <p className="font-medium">${calculateCryptoValueUSD(wallet.balance, wallet.cryptoId).toLocaleString()}</p>
-                                  <p className="text-xs text-gray-500">R{calculateCryptoValueZAR(wallet.balance, wallet.cryptoId).toLocaleString()}</p>
+                                  <p className="font-semibold text-green-600">${calculateCryptoValueUSD(wallet.balance, wallet.cryptoId).toLocaleString()}</p>
+                                  <p className="text-xs text-blue-600">R{calculateCryptoValueZAR(wallet.balance, wallet.cryptoId).toLocaleString()}</p>
                                 </div>
-                              </div>
+                              </Button>
                             ))}
                           </div>
                         </div>
@@ -887,14 +901,42 @@ export default function UserManagement({ users, isLoading }: UserManagementProps
                 
                 <TabsContent value="transactions" className="space-y-4">
                   <Card>
-                    <CardHeader>
-                      <CardTitle>Transaction History (2024 - Present)</CardTitle>
-                      <p className="text-sm text-gray-500">Complete trading history from 2024 to present</p>
+                    <CardHeader className="flex flex-row items-center justify-between">
+                      <div>
+                        <CardTitle className="flex items-center gap-2">
+                          Transaction History (2024 - Present)
+                          {selectedCryptoFilter && (
+                            <Badge variant="outline" className="bg-orange-100 text-orange-800">
+                              {cryptoSymbolMap[selectedCryptoFilter]} Only
+                            </Badge>
+                          )}
+                        </CardTitle>
+                        <p className="text-sm text-gray-500">
+                          {selectedCryptoFilter 
+                            ? `Showing ${cryptoSymbolMap[selectedCryptoFilter]} transactions only`
+                            : 'Complete trading history from 2024 to present'
+                          }
+                        </p>
+                      </div>
+                      {selectedCryptoFilter && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setSelectedCryptoFilter(null)}
+                          className="text-gray-600"
+                        >
+                          Clear Filter
+                        </Button>
+                      )}
                     </CardHeader>
                     <CardContent>
                       {userTransactions && userTransactions.length > 0 ? (
                         <div className="space-y-3 max-h-96 overflow-y-auto">
-                          {userTransactions.map((transaction: any) => {
+                          {userTransactions
+                            .filter((transaction: any) => 
+                              selectedCryptoFilter ? transaction.cryptoId === selectedCryptoFilter : true
+                            )
+                            .map((transaction: any) => {
                             // Determine transaction status and colors
                             const getTransactionStyle = (type: string, description: string) => {
                               if (description?.includes('admin_credit')) {
@@ -913,27 +955,100 @@ export default function UserManagement({ users, isLoading }: UserManagementProps
                             const style = getTransactionStyle(transaction.type, transaction.description);
                             
                             return (
-                            <div key={transaction.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
-                              <div className="flex items-center space-x-3">
-                                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${style.bg} ${style.text}`}>
-                                  {style.icon}
-                                </div>
-                                <div>
-                                  <div className="flex items-center space-x-2">
-                                    <span className="font-medium">{style.label}</span>
-                                    <span className="text-sm text-gray-500">{cryptoSymbolMap[transaction.cryptoId]}</span>
+                            <div key={transaction.id} className="p-4 border rounded-lg hover:bg-gradient-to-r hover:from-orange-50 hover:to-yellow-50 transition-all border-gray-200 hover:border-orange-200">
+                              <div className="flex items-start justify-between">
+                                <div className="flex items-start space-x-4">
+                                  <div className={`w-12 h-12 rounded-full flex items-center justify-center ${style.bg} shadow-md`}>
+                                    <span className={`font-bold text-lg ${style.text}`}>{style.icon}</span>
                                   </div>
-                                  <div className="text-sm text-gray-500">
-                                    {new Date(transaction.createdAt).toLocaleDateString()} • {transaction.paymentMethod || 'Bank Transfer'}
+                                  <div className="space-y-2">
+                                    <div className="flex items-center space-x-2">
+                                      <span className="font-semibold text-gray-900">{style.label}</span>
+                                      <Badge variant="outline" className="bg-orange-100 text-orange-800">
+                                        {transaction.cryptocurrency?.symbol || cryptoSymbolMap[transaction.cryptoId]}
+                                      </Badge>
+                                      <Badge variant="secondary" className="bg-green-100 text-green-800">
+                                        {transaction.status || 'Completed'}
+                                      </Badge>
+                                    </div>
+                                    
+                                    <div className="text-sm text-gray-600 space-y-1">
+                                      <div className="flex items-center gap-2">
+                                        <span className="font-medium">Amount:</span>
+                                        <span className="font-mono">{parseFloat(transaction.amount).toFixed(8)} {transaction.cryptocurrency?.symbol || cryptoSymbolMap[transaction.cryptoId]}</span>
+                                      </div>
+                                      
+                                      {(transaction.paymentMethod || transaction.payment_method) && (
+                                        <div className="flex items-center gap-2">
+                                          <span className="font-medium">Method:</span>
+                                          <span>{transaction.paymentMethod || transaction.payment_method}</span>
+                                        </div>
+                                      )}
+                                      
+                                      {transaction.description && (
+                                        <div className="flex items-start gap-2">
+                                          <span className="font-medium">Note:</span>
+                                          <span className="text-xs">{transaction.description}</span>
+                                        </div>
+                                      )}
+                                      
+                                      {(transaction.walletAddress || transaction.wallet_address) && (
+                                        <div className="flex items-center gap-2">
+                                          <span className="font-medium">Wallet:</span>
+                                          <span className="font-mono text-xs bg-gray-100 px-2 py-1 rounded">
+                                            {(transaction.walletAddress || transaction.wallet_address).substring(0, 20)}...
+                                          </span>
+                                          <Button
+                                            size="sm"
+                                            variant="ghost"
+                                            className="h-6 w-6 p-0"
+                                            onClick={() => {
+                                              navigator.clipboard.writeText(transaction.walletAddress || transaction.wallet_address);
+                                              toast({
+                                                title: "Copied!",
+                                                description: "Wallet address copied to clipboard",
+                                              });
+                                            }}
+                                          >
+                                            <Copy className="w-3 h-3" />
+                                          </Button>
+                                        </div>
+                                      )}
+                                    </div>
+                                    
+                                    <div className="text-xs text-gray-500">
+                                      {new Date(transaction.createdAt).toLocaleString()}
+                                    </div>
                                   </div>
                                 </div>
-                              </div>
-                              <div className="text-right">
-                                <div className="font-medium">
-                                  {parseFloat(transaction.amount).toFixed(6)} {transaction.cryptocurrency.symbol}
-                                </div>
-                                <div className="text-sm text-gray-500">
-                                  R{parseFloat(transaction.totalZar).toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                
+                                <div className="text-right space-y-1">
+                                  <div className={`font-bold text-lg ${
+                                    transaction.type === "buy" || transaction.type === "admin_credit" 
+                                      ? "text-green-600" 
+                                      : "text-red-600"
+                                  }`}>
+                                    {transaction.type === "buy" || transaction.type === "admin_credit" ? "+" : "-"}
+                                    {parseFloat(transaction.amount).toFixed(8)} {transaction.cryptocurrency?.symbol || cryptoSymbolMap[transaction.cryptoId]}
+                                  </div>
+                                  
+                                  {transaction.totalUsd && (
+                                    <div className="text-sm text-green-600">
+                                      ${parseFloat(transaction.totalUsd).toLocaleString(undefined, { 
+                                        minimumFractionDigits: 2, 
+                                        maximumFractionDigits: 2 
+                                      })}
+                                    </div>
+                                  )}
+                                  
+                                  {transaction.totalZar && (
+                                    <div className="text-sm text-blue-600">
+                                      R{parseFloat(transaction.totalZar).toLocaleString('en-ZA', { 
+                                        minimumFractionDigits: 2, 
+                                        maximumFractionDigits: 2 
+                                      })}
+                                    </div>
+                                  )}
                                 </div>
                               </div>
                             </div>
