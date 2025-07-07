@@ -19,7 +19,11 @@ import {
 import { useToast } from "@/hooks/use-toast";
 
 interface TransactionHistoryProps {
-  transactions: TransactionWithCrypto[];
+  transactions: (TransactionWithCrypto & {
+    wallet_address?: string;
+    transaction_hash?: string;
+    payment_method?: string;
+  })[];
 }
 
 export default function TransactionHistory({ transactions }: TransactionHistoryProps) {
@@ -154,11 +158,11 @@ export default function TransactionHistory({ transactions }: TransactionHistoryP
                         <span>{parseFloat(transaction.amount).toFixed(8)} {transaction.cryptocurrency.symbol}</span>
                       </div>
                       
-                      {transaction.paymentMethod && (
+                      {(transaction.paymentMethod || transaction.payment_method) && (
                         <div className="flex items-center gap-2">
-                          {getPaymentMethodIcon(transaction.paymentMethod)}
+                          {getPaymentMethodIcon(transaction.paymentMethod || transaction.payment_method)}
                           <span className="font-medium">Method:</span>
-                          <span>{formatPaymentMethod(transaction.paymentMethod)}</span>
+                          <span>{formatPaymentMethod(transaction.paymentMethod || transaction.payment_method)}</span>
                         </div>
                       )}
                       
@@ -169,34 +173,34 @@ export default function TransactionHistory({ transactions }: TransactionHistoryP
                         </div>
                       )}
                       
-                      {transaction.walletAddress && (
+                      {(transaction.walletAddress || transaction.wallet_address) && (
                         <div className="flex items-center gap-2">
                           <span className="font-medium">To Address:</span>
                           <span className="font-mono text-xs">
-                            {transaction.walletAddress.substring(0, 20)}...
+                            {(transaction.walletAddress || transaction.wallet_address).substring(0, 20)}...
                           </span>
                           <Button
                             size="sm"
                             variant="ghost"
                             className="h-6 w-6 p-0"
-                            onClick={() => copyToClipboard(transaction.walletAddress!, "Wallet address")}
+                            onClick={() => copyToClipboard((transaction.walletAddress || transaction.wallet_address)!, "Wallet address")}
                           >
                             <Copy className="w-3 h-3" />
                           </Button>
                         </div>
                       )}
                       
-                      {transaction.transactionHash && (
+                      {(transaction.transactionHash || transaction.transaction_hash) && (
                         <div className="flex items-center gap-2">
                           <span className="font-medium">TX Hash:</span>
                           <span className="font-mono text-xs">
-                            {transaction.transactionHash.substring(0, 16)}...
+                            {(transaction.transactionHash || transaction.transaction_hash).substring(0, 16)}...
                           </span>
                           <Button
                             size="sm"
                             variant="ghost"
                             className="h-6 w-6 p-0"
-                            onClick={() => copyToClipboard(transaction.transactionHash!, "Transaction hash")}
+                            onClick={() => copyToClipboard((transaction.transactionHash || transaction.transaction_hash)!, "Transaction hash")}
                           >
                             <Copy className="w-3 h-3" />
                           </Button>
