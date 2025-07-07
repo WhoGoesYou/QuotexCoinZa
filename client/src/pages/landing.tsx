@@ -9,19 +9,64 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 export default function Landing() {
   const [helpDialogOpen, setHelpDialogOpen] = useState(false);
   const [selectedQuestion, setSelectedQuestion] = useState("");
+  const [showResponse, setShowResponse] = useState(false);
+  const [currentResponse, setCurrentResponse] = useState("");
 
   const helpQuestions = [
-    "How do I create an account?",
-    "What cryptocurrencies can I trade?",
-    "How do I verify my account?",
-    "What are the trading fees?",
-    "How do I deposit funds?",
-    "How do I withdraw my earnings?",
-    "Is my money safe?",
-    "What is the minimum deposit?",
-    "How do I contact support?",
-    "Put me in touch with an agent"
+    {
+      question: "How do I create an account?",
+      response: "Creating an account is easy! Click 'Get Started' or 'Create Account' button, fill in your details including full name, username, email, and password. You'll get instant access to start trading immediately."
+    },
+    {
+      question: "What cryptocurrencies can I trade?",
+      response: "We support 6 major cryptocurrencies: Bitcoin (BTC), Ethereum (ETH), Ripple (XRP), Solana (SOL), Tether (USDT), and USD Coin (USDC). All with real-time pricing and instant execution."
+    },
+    {
+      question: "How do I verify my account?",
+      response: "Account verification is automatic upon registration. For enhanced security and higher limits, you may need to provide additional identification documents through your dashboard."
+    },
+    {
+      question: "What are the trading fees?",
+      response: "We offer competitive trading fees starting from 0.1% per transaction. Volume discounts available for high-frequency traders. No hidden charges - all fees are transparent and displayed before confirmation."
+    },
+    {
+      question: "How do I deposit funds?",
+      response: "You can deposit funds through multiple methods: bank transfer, credit/debit cards, or cryptocurrency transfers. All deposits are processed securely with bank-level encryption."
+    },
+    {
+      question: "How do I withdraw my earnings?",
+      response: "Withdrawals are processed within 24 hours. You can withdraw to your bank account, credit card, or cryptocurrency wallet. Minimum withdrawal amounts apply based on the method chosen."
+    },
+    {
+      question: "Is my money safe?",
+      response: "Absolutely! We use bank-grade security with 256-bit SSL encryption, cold storage for 95% of funds, and are fully licensed and regulated. Your investments are protected by industry-leading security measures."
+    },
+    {
+      question: "What is the minimum deposit?",
+      response: "The minimum deposit is $10 USD equivalent. This low threshold makes cryptocurrency trading accessible to everyone, whether you're a beginner or experienced trader."
+    },
+    {
+      question: "How do I contact support?",
+      response: "Our 24/7 support team is available via email at support.quotex@quotexes.online or phone at +1 (672) 380-5729. Average response time is under 2 hours."
+    },
+    {
+      question: "Put me in touch with an agent",
+      response: "AGENT_CONTACT"
+    }
   ];
+
+  const handleQuestionClick = (item: any) => {
+    setSelectedQuestion(item.question);
+    if (item.response === "AGENT_CONTACT") {
+      setHelpDialogOpen(false);
+      setTimeout(() => {
+        alert(`🎯 Agent Contact Information\n\n📧 Email: support.quotex@quotexes.online\n📞 Phone: +1 (672) 380-5729\n\n⏰ Available 24/7 for immediate assistance\n💬 Average response time: Under 2 hours\n\nOur professional support team is ready to help with any questions or issues you may have!`);
+      }, 300);
+    } else {
+      setCurrentResponse(item.response);
+      setShowResponse(true);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900 relative">
@@ -377,57 +422,92 @@ export default function Landing() {
               <HelpCircle className="h-6 w-6" />
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-md bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900 border-white/20 text-white">
+          <DialogContent className="sm:max-w-lg bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900 border-white/20 text-white">
             <DialogHeader>
               <DialogTitle className="text-center text-xl font-bold">
                 <span className="bg-gradient-to-r from-orange-400 to-yellow-400 bg-clip-text text-transparent">
-                  Quick Help
+                  {showResponse ? "💬 Support Response" : "🎯 Quick Help"}
                 </span>
               </DialogTitle>
             </DialogHeader>
-            <div className="space-y-3">
-              <p className="text-white/80 text-center">How can we help you today?</p>
-              <div className="grid gap-2">
-                {helpQuestions.map((question, index) => (
-                  <Button
-                    key={index}
-                    variant="outline"
-                    className="justify-start border-white/30 text-white hover:bg-white/20 text-left"
-                    onClick={() => {
-                      setSelectedQuestion(question);
-                      if (question === "Put me in touch with an agent") {
-                        setHelpDialogOpen(false);
-                        // Show agent contact
-                        setTimeout(() => {
-                          alert(`Agent Contact:\n📧 Email: support.quotex@quotexes.online\n📞 Phone: +1 (672) 380-5729\n\nAvailable 24/7 for immediate assistance`);
-                        }, 300);
-                      }
-                    }}
-                  >
-                    {question}
-                  </Button>
-                ))}
-              </div>
-              <div className="pt-4 border-t border-white/20 text-center">
-                <p className="text-white/70 text-sm mb-2">Need immediate assistance?</p>
-                <div className="flex flex-col space-y-2">
-                  <a 
-                    href="mailto:support.quotex@quotexes.online" 
-                    className="flex items-center justify-center space-x-2 text-orange-400 hover:text-orange-300"
-                  >
-                    <Mail className="h-4 w-4" />
-                    <span>support.quotex@quotexes.online</span>
-                  </a>
-                  <a 
-                    href="tel:6723805729" 
-                    className="flex items-center justify-center space-x-2 text-orange-400 hover:text-orange-300"
-                  >
-                    <Phone className="h-4 w-4" />
-                    <span>+1 (672) 380-5729</span>
-                  </a>
+            
+            {!showResponse ? (
+              <div className="space-y-3">
+                <p className="text-white/80 text-center">How can we help you today?</p>
+                <div className="grid gap-2 max-h-64 overflow-y-auto">
+                  {helpQuestions.map((item, index) => (
+                    <button
+                      key={index}
+                      className="w-full p-3 text-left bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg transition-all duration-200 text-white hover:border-orange-400/50"
+                      onClick={() => handleQuestionClick(item)}
+                    >
+                      <span className="text-orange-400 mr-2">❓</span>
+                      {item.question}
+                    </button>
+                  ))}
+                </div>
+                <div className="pt-4 border-t border-white/20 text-center">
+                  <p className="text-white/70 text-sm mb-2">Need immediate assistance?</p>
+                  <div className="flex flex-col space-y-2">
+                    <a 
+                      href="mailto:support.quotex@quotexes.online" 
+                      className="flex items-center justify-center space-x-2 text-orange-400 hover:text-orange-300 transition-colors"
+                    >
+                      <Mail className="h-4 w-4" />
+                      <span>support.quotex@quotexes.online</span>
+                    </a>
+                    <a 
+                      href="tel:6723805729" 
+                      className="flex items-center justify-center space-x-2 text-orange-400 hover:text-orange-300 transition-colors"
+                    >
+                      <Phone className="h-4 w-4" />
+                      <span>+1 (672) 380-5729</span>
+                    </a>
+                  </div>
                 </div>
               </div>
-            </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="bg-white/10 rounded-lg p-4 border border-white/20">
+                  <h3 className="text-orange-400 font-semibold mb-2">❓ {selectedQuestion}</h3>
+                  <p className="text-white/90 leading-relaxed">{currentResponse}</p>
+                </div>
+                <div className="flex gap-2">
+                  <Button 
+                    onClick={() => setShowResponse(false)}
+                    className="flex-1 bg-white/10 hover:bg-white/20 text-white border border-white/20"
+                  >
+                    ← Back to Questions
+                  </Button>
+                  <Button 
+                    onClick={() => {
+                      setHelpDialogOpen(false);
+                      setShowResponse(false);
+                    }}
+                    className="flex-1 bg-gradient-to-r from-orange-500 to-yellow-500 hover:from-orange-600 hover:to-yellow-600"
+                  >
+                    Close Help
+                  </Button>
+                </div>
+                <div className="text-center pt-2 border-t border-white/20">
+                  <p className="text-white/70 text-sm mb-2">Still need help? Contact our support team:</p>
+                  <div className="flex flex-col space-y-1 text-sm">
+                    <a 
+                      href="mailto:support.quotex@quotexes.online" 
+                      className="text-orange-400 hover:text-orange-300 transition-colors"
+                    >
+                      📧 support.quotex@quotexes.online
+                    </a>
+                    <a 
+                      href="tel:6723805729" 
+                      className="text-orange-400 hover:text-orange-300 transition-colors"
+                    >
+                      📞 +1 (672) 380-5729
+                    </a>
+                  </div>
+                </div>
+              </div>
+            )}
           </DialogContent>
         </Dialog>
       </div>
