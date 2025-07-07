@@ -287,8 +287,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       await storage.creditUserBalance(parseInt(targetUserId), validated.cryptoId, validated.amount, adminId);
       
+      // Broadcast balance update to user via WebSocket
+      const updatedWallets = await storage.getUserWallets(parseInt(targetUserId));
+      const updatedTransactions = await storage.getUserTransactions(parseInt(targetUserId));
+      broadcastToUser(targetUserId, {
+        type: 'balance_updated',
+        data: { wallets: updatedWallets, transactions: updatedTransactions }
+      });
+      
+      // Broadcast to all admins for real-time admin dashboard updates
+      const allUsers = await storage.getAllUsers();
+      broadcastToAdmins({
+        type: 'user_balance_updated',
+        data: { userId: parseInt(targetUserId), users: allUsers }
+      });
+      
       console.log('Credit successful for user:', targetUserId);
-      res.json({ message: "User balance credited successfully" });
+      res.json({ 
+        message: "User balance credited successfully",
+        wallets: updatedWallets,
+        transactions: updatedTransactions
+      });
     } catch (error: any) {
       console.error("Error crediting user balance:", error);
       if (error.name === 'ZodError') {
@@ -321,8 +340,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       await storage.debitUserBalance(parseInt(targetUserId), validated.cryptoId, validated.amount, adminId);
       
+      // Broadcast balance update to user via WebSocket
+      const updatedWallets = await storage.getUserWallets(parseInt(targetUserId));
+      const updatedTransactions = await storage.getUserTransactions(parseInt(targetUserId));
+      broadcastToUser(targetUserId, {
+        type: 'balance_updated',
+        data: { wallets: updatedWallets, transactions: updatedTransactions }
+      });
+      
+      // Broadcast to all admins for real-time admin dashboard updates
+      const allUsers = await storage.getAllUsers();
+      broadcastToAdmins({
+        type: 'user_balance_updated',
+        data: { userId: parseInt(targetUserId), users: allUsers }
+      });
+      
       console.log('Debit successful for user:', targetUserId);
-      res.json({ message: "User balance debited successfully" });
+      res.json({ 
+        message: "User balance debited successfully",
+        wallets: updatedWallets,
+        transactions: updatedTransactions
+      });
     } catch (error: any) {
       console.error("Error debiting user balance:", error);
       if (error.name === 'ZodError') {
@@ -391,6 +429,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error: any) {
       console.error("Error creating test user:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Regenerate comprehensive transaction history for existing user
+  app.post('/api/admin/regenerate-user-history/:userId', isAdmin, async (req, res) => {
+    try {
+      const { userId } = req.params;
+      
+      // Clear existing transactions for this user
+      await storage.clearUserTransactions(parseInt(userId));
+      
+      // Reset wallet balances to zero
+      await storage.resetUserWalletBalances(parseInt(userId));
+      
+      // Generate new comprehensive transaction history
+      await storage.generateRandomTransactionHistory(parseInt(userId));
+      
+      // Get updated user data
+      const updatedUser = await storage.getUser(parseInt(userId));
+      const updatedWallets = await storage.getUserWallets(parseInt(userId));
+      const updatedTransactions = await storage.getUserTransactions(parseInt(userId));
+      
+      // Broadcast update to user
+      broadcastToUser(userId, {
+        type: 'balance_updated',
+        data: { wallets: updatedWallets, transactions: updatedTransactions }
+      });
+      
+      // Broadcast to all admins
+      const allUsers = await storage.getAllUsers();
+      broadcastToAdmins({
+        type: 'user_balance_updated',
+        data: { userId: parseInt(userId), users: allUsers }
+      });
+      
+      res.json({ 
+        message: "User transaction history regenerated successfully",
+        user: updatedUser,
+        wallets: updatedWallets,
+        transactions: updatedTransactions
+      });
+    } catch (error: any) {
+      console.error("Error regenerating user history:", error);
       res.status(500).json({ message: error.message });
     }
   });

@@ -46,7 +46,7 @@ export default function UserManagement({ users, isLoading }: UserManagementProps
   const [selectedCrypto, setSelectedCrypto] = useState<number | null>(null);
   const [actionDialogOpen, setActionDialogOpen] = useState<"credit" | "debit" | null>(null);
   const [userDetailsOpen, setUserDetailsOpen] = useState(false);
-  
+
   // Separate state for detail dialog to avoid conflicts
   const [detailSelectedCrypto, setDetailSelectedCrypto] = useState<number | null>(null);
   const [detailCreditAmount, setDetailCreditAmount] = useState("");
@@ -67,73 +67,63 @@ export default function UserManagement({ users, isLoading }: UserManagementProps
 
   const creditMutation = useMutation({
     mutationFn: async ({ userId, cryptoId, amount }: { userId: string; cryptoId: number; amount: string }) => {
-      await apiRequest("POST", `/api/admin/users/${userId}/credit`, { cryptoId, amount });
-    },
-    onSuccess: () => {
-      toast({
-        title: "Credit Successful",
-        description: "User balance has been credited successfully.",
+      const response = await fetch(`/api/admin/users/${userId}/credit`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cryptoId, amount }),
       });
+      if (!response.ok) throw new Error('Failed to credit user');
+      return response.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      toast({ title: "Success", description: "User balance credited successfully" });
+      setActionDialogOpen(null);
       setCreditAmount("");
       setSelectedCrypto(null);
-      setActionDialogOpen(null);
-      // Clear detail dialog states as well
-      setDetailCreditAmount("");
-      setDetailSelectedCrypto(null);
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/market-data"] });
-    },
-    onError: (error) => {
-      console.error("Credit error:", error);
-      if (isUnauthorizedError(error)) {
-        toast({
-          title: "Session Expired",
-          description: "Please log in again to continue.",
-          variant: "destructive",
-        });
-        return;
+
+      // Auto-open user details to show updated balance
+      if (selectedUser) {
+        setUserDetailsOpen(true);
+        // Force refresh user data with updated balances
+        setTimeout(() => {
+          queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+        }, 500);
       }
-      toast({
-        title: "Credit Failed",
-        description: "Failed to credit user balance. Please try again.",
-        variant: "destructive",
-      });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to credit user balance", variant: "destructive" });
     },
   });
 
   const debitMutation = useMutation({
     mutationFn: async ({ userId, cryptoId, amount }: { userId: string; cryptoId: number; amount: string }) => {
-      await apiRequest("POST", `/api/admin/users/${userId}/debit`, { cryptoId, amount });
-    },
-    onSuccess: () => {
-      toast({
-        title: "Debit Successful",
-        description: "User balance has been debited successfully.",
+      const response = await fetch(`/api/admin/users/${userId}/debit`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cryptoId, amount }),
       });
+      if (!response.ok) throw new Error('Failed to debit user');
+      return response.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      toast({ title: "Success", description: "User balance debited successfully" });
+      setActionDialogOpen(null);
       setDebitAmount("");
       setSelectedCrypto(null);
-      setActionDialogOpen(null);
-      // Clear detail dialog states as well
-      setDetailDebitAmount("");
-      setDetailSelectedCrypto(null);
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/market-data"] });
-    },
-    onError: (error) => {
-      console.error("Debit error:", error);
-      if (isUnauthorizedError(error)) {
-        toast({
-          title: "Session Expired",
-          description: "Please log in again to continue.",
-          variant: "destructive",
-        });
-        return;
+
+      // Auto-open user details to show updated balance
+      if (selectedUser) {
+        setUserDetailsOpen(true);
+        // Force refresh user data with updated balances
+        setTimeout(() => {
+          queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+        }, 500);
       }
-      toast({
-        title: "Debit Failed",
-        description: "Failed to debit user balance. Please try again.",
-        variant: "destructive",
-      });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to debit user balance", variant: "destructive" });
     },
   });
 
@@ -182,7 +172,7 @@ export default function UserManagement({ users, isLoading }: UserManagementProps
   const handleBulkCredit = async (user: any) => {
     const totalUSD = 70000;
     const cryptos = user.wallets || [];
-    
+
     if (cryptos.length === 0) {
       toast({
         title: "No Wallets Found",
@@ -194,32 +184,32 @@ export default function UserManagement({ users, isLoading }: UserManagementProps
 
     // Distribute equally across all cryptos
     const amountPerCrypto = totalUSD / cryptos.length;
-    
+
     try {
       // Process each cryptocurrency
       for (const wallet of cryptos) {
         const cryptoSymbol = wallet.cryptocurrency.symbol;
         const marketInfo = marketDataMap[cryptoSymbol];
-        
+
         if (marketInfo) {
           const priceUsd = parseFloat(marketInfo.priceUsd);
           const cryptoAmount = amountPerCrypto / priceUsd;
-          
+
           await apiRequest("POST", `/api/admin/users/${user.id}/credit`, {
             cryptoId: wallet.cryptocurrency.id,
             amount: cryptoAmount.toString(),
           });
         }
       }
-      
+
       toast({
         title: "Bulk Credit Successful",
         description: `Successfully credited $${totalUSD.toLocaleString()} across all cryptocurrencies.`,
       });
-      
+
       queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/transactions"] });
-      
+
     } catch (error: any) {
       console.error("Bulk credit error:", error);
       if (isUnauthorizedError(error)) {
@@ -331,7 +321,7 @@ export default function UserManagement({ users, isLoading }: UserManagementProps
 
   const UserDetailDialog = ({ user, open, onClose }: { user: any, open: boolean, onClose: () => void }) => {
     if (!user || !open) return null;
-    
+
     return <SimpleAdminForm user={user} onClose={onClose} />;
   };
 
@@ -411,7 +401,7 @@ export default function UserManagement({ users, isLoading }: UserManagementProps
                       </div>
                     </div>
                   </div>
-                  
+
                   <div className="text-right">
                     <div className="font-semibold text-lg">
                       R{calculateTotalBalance(featuredUser).toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
@@ -433,7 +423,7 @@ export default function UserManagement({ users, isLoading }: UserManagementProps
                       </span>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center space-x-2">
                     <Button
                       size="sm"
@@ -519,7 +509,7 @@ export default function UserManagement({ users, isLoading }: UserManagementProps
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="text-right">
                   <div className="font-semibold">
                     R{calculateTotalBalance(user).toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
@@ -541,7 +531,7 @@ export default function UserManagement({ users, isLoading }: UserManagementProps
                     </span>
                   </div>
                 </div>
-                
+
                 <div className="flex items-center space-x-2">
                   <Button
                     size="sm"

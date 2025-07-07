@@ -1,21 +1,24 @@
-import { useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useToast } from "@/hooks/use-toast";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { Activity, Wallet, TrendingUp, User, CreditCard } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import WalletBalance from "@/components/wallet-balance";
+import TransactionHistory from "@/components/transaction-history";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { websocketService } from "@/services/websocket";
 import CryptoCard from "@/components/crypto-card";
-import WalletBalance from "@/components/wallet-balance";
-import TransactionHistory from "@/components/transaction-history";
-import { TrendingUp, Wallet, Activity, DollarSign } from "lucide-react";
+import { DollarSign } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Dashboard() {
-  const { toast } = useToast();
   const { user, isLoading: authLoading } = useAuth();
+  const [activeTab, setActiveTab] = useState("overview");
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   const { data: profile, isLoading: profileLoading } = useQuery({
     queryKey: ["/api/users/profile"],
@@ -54,6 +57,48 @@ export default function Dashboard() {
       websocketService.disconnect();
     };
   }, [user, authLoading, toast]);
+
+  // WebSocket connection for real-time updates
+  useEffect(() => {
+    if (!user) return;
+
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const ws = new WebSocket(`${protocol}//${window.location.host}/ws`);
+
+    ws.onopen = () => {
+      console.log('WebSocket connected to dashboard');
+      // Authenticate with the WebSocket server
+      ws.send(JSON.stringify({
+        type: 'authenticate',
+        data: { userId: user.id.toString(), isAdmin: false }
+      }));
+    };
+
+    ws.onmessage = (event) => {
+      try {
+        const message = JSON.parse(event.data);
+
+        if (message.type === 'balance_updated') {
+          console.log('Received balance update:', message.data);
+          // Refresh profile data immediately
+          queryClient.invalidateQueries({ queryKey: ["/api/users/profile"] });
+        } else if (message.type === 'market_data_update') {
+          // Refresh market data
+          queryClient.invalidateQueries({ queryKey: ["/api/market-data"] });
+        }
+      } catch (error) {
+        console.error('WebSocket message parse error:', error);
+      }
+    };
+
+    ws.onclose = () => {
+      console.log('WebSocket disconnected from dashboard');
+    };
+
+    return () => {
+      ws.close();
+    };
+  }, [user, queryClient]);
 
   if (authLoading || profileLoading) {
     return (

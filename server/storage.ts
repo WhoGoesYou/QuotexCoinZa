@@ -439,60 +439,199 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
-  // Generate random transaction history
+  // Clear all transactions for a user
+  async clearUserTransactions(userId: number): Promise<void> {
+    await db.delete(transactions).where(eq(transactions.userId, userId));
+  }
+
+  // Reset all wallet balances for a user to zero
+  async resetUserWalletBalances(userId: number): Promise<void> {
+    await db.update(wallets)
+      .set({ balance: "0" })
+      .where(eq(wallets.userId, userId));
+  }
+
+  // Generate comprehensive transaction history from 2024 to present
   async generateRandomTransactionHistory(userId: number): Promise<void> {
     const cryptos = await this.getCryptocurrencies();
     const paymentMethods = ["credit_card", "debit_card", "bank_transfer", "wire_transfer", "ach"];
 
-    // Create some deposits with different payment methods
-    const depositTypes = ["deposit", "admin_credit"];
-    for (let i = 0; i < 8; i++) {
+    // Generate transactions from January 2024 to present
+    const startDate = new Date('2024-01-01');
+    const endDate = new Date();
+    const totalDays = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+    
+    let runningBalances: Record<number, number> = {};
+    cryptos.forEach(crypto => {
+      runningBalances[crypto.id] = 0;
+    });
+
+    // Create 50-80 transactions spread across 2024 to present
+    const totalTransactions = 60 + Math.floor(Math.random() * 20);
+    
+    for (let i = 0; i < totalTransactions; i++) {
+      // Random date between start and end
+      const randomDayOffset = Math.floor(Math.random() * totalDays);
+      const transactionDate = new Date(startDate.getTime() + (randomDayOffset * 24 * 60 * 60 * 1000));
+      
       const crypto = cryptos[Math.floor(Math.random() * cryptos.length)];
-      const isAdminCredit = Math.random() > 0.6;
-      const type = isAdminCredit ? "admin_credit" : "deposit";
-      const amount = (Math.random() * 1000 + 50).toFixed(8);
-      const paymentMethod = paymentMethods[Math.floor(Math.random() * paymentMethods.length)];
+      
+      // Determine transaction type based on current balance and probability
+      let type: string;
+      const currentBalance = runningBalances[crypto.id] || 0;
+      const rand = Math.random();
+      
+      if (currentBalance < 0.001) {
+        // Force credit if balance is too low
+        type = Math.random() > 0.4 ? "admin_credit" : "deposit";
+      } else if (rand < 0.4) {
+        // 40% chance of credit operations
+        type = Math.random() > 0.5 ? "admin_credit" : "deposit";
+      } else if (rand < 0.7) {
+        // 30% chance of debit operations (only if sufficient balance)
+        type = Math.random() > 0.5 ? "admin_debit" : "withdrawal";
+      } else {
+        // 30% chance of trading operations
+        type = Math.random() > 0.5 ? "buy" : "sell";
+      }
 
-      // Get market data for pricing
-      const cryptoMarketData = await db.select().from(marketData).where(eq(marketData.cryptoId, crypto.id));
-      const priceUsd = cryptoMarketData.length > 0 ? parseFloat(cryptoMarketData[0].priceUsd) : 100;
-      const priceZar = cryptoMarketData.length > 0 ? parseFloat(cryptoMarketData[0].priceZar) : 1700;
+      let amount: number;
+      if (type === "admin_credit" || type === "deposit") {
+        // Credit operations: $500 to $15,000 worth
+        const usdValue = 500 + Math.random() * 14500;
+        const priceUsd = this.getHistoricalPrice(crypto.symbol, transactionDate);
+        amount = usdValue / priceUsd;
+      } else if (type === "admin_debit" || type === "withdrawal") {
+        // Debit operations: 5% to 40% of current balance
+        if (currentBalance > 0) {
+          const maxDebit = currentBalance * 0.4;
+          const minDebit = Math.min(currentBalance * 0.05, maxDebit);
+          amount = minDebit + Math.random() * (maxDebit - minDebit);
+        } else {
+          continue; // Skip if no balance
+        }
+      } else {
+        // Trading operations
+        if (currentBalance > 0) {
+          amount = Math.random() * currentBalance * 0.3;
+        } else {
+          continue;
+        }
+      }
 
-      const totalUsd = (parseFloat(amount) * priceUsd).toFixed(2);
-      const totalZar = (parseFloat(amount) * priceZar).toFixed(2);
+      const priceUsd = this.getHistoricalPrice(crypto.symbol, transactionDate);
+      const priceZar = priceUsd * 18.5; // Approximate ZAR exchange rate
 
-      await this.createTransaction({
+      const totalUsd = (amount * priceUsd).toFixed(2);
+      const totalZar = (amount * priceZar).toFixed(2);
+
+      // Update running balance
+      if (type === "admin_credit" || type === "deposit" || type === "buy") {
+        runningBalances[crypto.id] = (runningBalances[crypto.id] || 0) + amount;
+      } else {
+        runningBalances[crypto.id] = Math.max(0, (runningBalances[crypto.id] || 0) - amount);
+      }
+
+      const paymentMethod = ["admin_credit", "admin_debit"].includes(type) ? null : paymentMethods[Math.floor(Math.random() * paymentMethods.length)];
+      
+      // Create transaction with historical date
+      const transaction = await db.insert(transactions).values({
         userId,
         cryptoId: crypto.id,
         type,
-        amount,
+        amount: amount.toFixed(8),
         price: priceUsd.toString(),
         totalUsd,
         totalZar,
-        paymentMethod: isAdminCredit ? null : paymentMethod,
-        description: isAdminCredit ? "Admin credit for account funding" : `Deposit via ${paymentMethod}`,
-        adminUserId: isAdminCredit ? 1 : null,
-      });
+        status: "completed",
+        paymentMethod,
+        description: this.getTransactionDescription(type, paymentMethod),
+        adminUserId: ["admin_credit", "admin_debit"].includes(type) ? 1 : null,
+        walletAddress: type === "withdrawal" ? this.generateRandomAddress(crypto.symbol) : null,
+        transactionHash: ["withdrawal", "buy", "sell"].includes(type) ? this.generateRandomHash() : null,
+        createdAt: transactionDate,
+        updatedAt: transactionDate,
+      }).returning();
 
-      // Update wallet balance
-      const wallet = await this.getWalletByUserAndCrypto(userId, crypto.id);
-      if (wallet) {
-        const newBalance = (parseFloat(wallet.balance || "0") + parseFloat(amount)).toFixed(8);
-        await this.updateWalletBalance(wallet.id, newBalance);
-      }
-
-      // Random delay between transactions (simulate different dates)
-      await new Promise(resolve => setTimeout(resolve, Math.random() * 10));
+      // Small delay to ensure unique timestamps
+      await new Promise(resolve => setTimeout(resolve, 1));
     }
 
-    // Create some withdrawals
-    for (let i = 0; i < 3; i++) {
-      const crypto = cryptos[Math.floor(Math.random() * cryptos.length)];
+    // Update final wallet balances
+    for (const crypto of cryptos) {
       const wallet = await this.getWalletByUserAndCrypto(userId, crypto.id);
+      if (wallet && runningBalances[crypto.id] > 0) {
+        await this.updateWalletBalance(wallet.id, runningBalances[crypto.id].toFixed(8));
+      }
+    }
+  }
 
-      if (wallet && parseFloat(wallet.balance || "0") > 0) {
-        const maxWithdraw = parseFloat(wallet.balance || "0") * 0.3; // Withdraw max 30% of balance
-        const amount = (Math.random() * maxWithdraw + 1).toFixed(8);
+  // Get historical crypto prices (simplified simulation)
+  private getHistoricalPrice(symbol: string, date: Date): number {
+    const currentPrices: Record<string, number> = {
+      'BTC': 108748.97,
+      'ETH': 3341.23,
+      'XRP': 2.23,
+      'ADA': 0.89,
+      'SOL': 176.45,
+      'DOT': 7.12
+    };
+
+    const basePrice = currentPrices[symbol] || 100;
+    const daysSince2024 = Math.ceil((date.getTime() - new Date('2024-01-01').getTime()) / (1000 * 60 * 60 * 24));
+    const volatility = 0.02 + Math.random() * 0.05; // 2-7% daily volatility
+    const trend = Math.sin(daysSince2024 / 30) * 0.3; // Monthly trend cycle
+    
+    return basePrice * (0.3 + 0.7 * (1 + trend + (Math.random() - 0.5) * volatility));
+  }
+
+  private getTransactionDescription(type: string, paymentMethod: string | null): string {
+    switch (type) {
+      case "admin_credit":
+        return "Admin credit - Account funding";
+      case "admin_debit":
+        return "Admin debit - Balance adjustment";
+      case "deposit":
+        return `Deposit via ${paymentMethod?.replace('_', ' ').toUpperCase()}`;
+      case "withdrawal":
+        return `Withdrawal to external wallet`;
+      case "buy":
+        return "Buy order executed";
+      case "sell":
+        return "Sell order executed";
+      default:
+        return `${type.charAt(0).toUpperCase() + type.slice(1)} transaction`;
+    }
+  }
+
+  private generateRandomAddress(symbol: string): string {
+    const prefixes: Record<string, string> = {
+      'BTC': ['1', '3', 'bc1'],
+      'ETH': ['0x'],
+      'XRP': ['r'],
+      'ADA': ['addr1'],
+      'SOL': [''],
+      'DOT': ['1']
+    };
+    
+    const prefix = prefixes[symbol] ? prefixes[symbol][Math.floor(Math.random() * prefixes[symbol].length)] : '';
+    const chars = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+    let result = prefix;
+    const length = symbol === 'ETH' ? 42 : 34;
+    
+    for (let i = prefix.length; i < length; i++) {
+      result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return result;
+  }
+
+  private generateRandomHash(): string {
+    const chars = '0123456789abcdef';
+    let result = '0x';
+    for (let i = 0; i < 64; i++) {
+      result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return result;
 
         // Get market data for pricing
         const cryptoMarketData = await db.select().from(marketData).where(eq(marketData.cryptoId, crypto.id));
