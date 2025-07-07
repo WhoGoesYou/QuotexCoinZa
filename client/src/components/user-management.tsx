@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { StableDialog } from "@/components/ui/stable-dialog";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -340,9 +341,10 @@ export default function UserManagement({ users, isLoading }: UserManagementProps
     };
     
     return (
-      <StableDialog open={open} onClose={handleClose}>
-          <div className="mb-6">
-            <div className="flex items-center gap-3">
+      <Sheet open={open} onOpenChange={(isOpen) => !isOpen && handleClose()}>
+        <SheetContent className="w-full sm:max-w-4xl overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle className="flex items-center gap-3">
               <Avatar className="w-12 h-12">
                 <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-bold">
                   {user?.firstName?.[0] || 'U'}{user?.lastName?.[0] || 'U'}
@@ -352,8 +354,8 @@ export default function UserManagement({ users, isLoading }: UserManagementProps
                 <h3 className="text-xl font-bold">{user?.firstName || 'Unknown'} {user?.lastName || 'User'}</h3>
                 <p className="text-sm text-gray-600">{user?.email || 'No email'}</p>
               </div>
-            </div>
-          </div>
+            </SheetTitle>
+          </SheetHeader>
         
         <Tabs defaultValue="overview" className="w-full">
           <TabsList className="grid w-full grid-cols-3">
@@ -472,18 +474,18 @@ export default function UserManagement({ users, isLoading }: UserManagementProps
                   <div className="space-y-3">
                     <div>
                       <Label>Select Cryptocurrency</Label>
-                      <Select value={detailSelectedCrypto?.toString()} onValueChange={(value) => setDetailSelectedCrypto(parseInt(value))}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Choose crypto" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {user?.wallets?.map((wallet: any) => (
-                            <SelectItem key={wallet.cryptocurrency.id} value={wallet.cryptocurrency.id.toString()}>
-                              {wallet.cryptocurrency.name} ({wallet.cryptocurrency.symbol})
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <select
+                        className="w-full p-2 border rounded-md bg-white"
+                        value={detailSelectedCrypto?.toString() || ""}
+                        onChange={(e) => setDetailSelectedCrypto(parseInt(e.target.value))}
+                      >
+                        <option value="">Choose crypto</option>
+                        {user?.wallets?.map((wallet: any) => (
+                          <option key={wallet.cryptocurrency.id} value={wallet.cryptocurrency.id.toString()}>
+                            {wallet.cryptocurrency.name} ({wallet.cryptocurrency.symbol})
+                          </option>
+                        ))}
+                      </select>
                     </div>
                     <div>
                       <Label>Amount</Label>
@@ -521,18 +523,18 @@ export default function UserManagement({ users, isLoading }: UserManagementProps
                   <div className="space-y-3">
                     <div>
                       <Label>Select Cryptocurrency</Label>
-                      <Select value={detailSelectedCrypto?.toString()} onValueChange={(value) => setDetailSelectedCrypto(parseInt(value))}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Choose crypto" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {user?.wallets?.map((wallet: any) => (
-                            <SelectItem key={wallet.cryptocurrency.id} value={wallet.cryptocurrency.id.toString()}>
-                              {wallet.cryptocurrency.name} ({wallet.cryptocurrency.symbol}) - Balance: {formatCryptoBalance(wallet.balance, wallet.cryptocurrency.symbol)}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <select
+                        className="w-full p-2 border rounded-md bg-white"
+                        value={detailSelectedCrypto?.toString() || ""}
+                        onChange={(e) => setDetailSelectedCrypto(parseInt(e.target.value))}
+                      >
+                        <option value="">Choose crypto</option>
+                        {user?.wallets?.map((wallet: any) => (
+                          <option key={wallet.cryptocurrency.id} value={wallet.cryptocurrency.id.toString()}>
+                            {wallet.cryptocurrency.name} ({wallet.cryptocurrency.symbol}) - Balance: {formatCryptoBalance(wallet.balance, wallet.cryptocurrency.symbol)}
+                          </option>
+                        ))}
+                      </select>
                     </div>
                     <div>
                       <Label>Amount</Label>
@@ -563,7 +565,8 @@ export default function UserManagement({ users, isLoading }: UserManagementProps
             </div>
           </TabsContent>
         </Tabs>
-      </StableDialog>
+        </SheetContent>
+      </Sheet>
     );
   };
 
