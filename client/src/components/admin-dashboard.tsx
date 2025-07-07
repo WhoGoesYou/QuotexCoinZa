@@ -3,11 +3,12 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import UserManagement from "./user-management";
-import { Users, DollarSign, Wallet, Activity, TrendingUp, AlertCircle, Bitcoin, Shield, Globe } from "lucide-react";
+import { Users, DollarSign, Wallet, Activity, TrendingUp, AlertCircle, Bitcoin, Shield, Globe, LogOut } from "lucide-react";
 
 export default function AdminDashboard() {
   const { toast } = useToast();
@@ -100,6 +101,20 @@ export default function AdminDashboard() {
               <div className="text-sm text-blue-300">
                 Last updated: {new Date().toLocaleString()}
               </div>
+              <Button
+                onClick={() => {
+                  // Clear admin session
+                  document.cookie = "admin_session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+                  // Redirect to admin login
+                  window.location.href = "/admin";
+                }}
+                variant="outline"
+                size="sm"
+                className="bg-red-600/20 text-red-300 border-red-500/30 hover:bg-red-600/30 hover:text-red-200"
+              >
+                <LogOut className="w-4 h-4 mr-2" />
+                Sign Out
+              </Button>
             </div>
           </div>
         </div>
