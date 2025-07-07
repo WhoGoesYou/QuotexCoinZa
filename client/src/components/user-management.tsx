@@ -28,7 +28,9 @@ import {
   TrendingUp,
   ArrowUpCircle,
   ArrowDownCircle,
-  DollarSign
+  DollarSign,
+  User,
+  Users
 } from "lucide-react";
 
 interface UserManagementProps {
