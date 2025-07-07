@@ -82,25 +82,26 @@ export default function UserManagement({ users, isLoading }: UserManagementProps
     onSuccess: (data) => {
       toast({ title: "Success", description: "User balance credited successfully" });
       
-      // Clear form states
+      // Clear form states and close modals
       setActionDialogOpen(null);
       setCreditAmount("");
       setSelectedCrypto(null);
       setDetailCreditAmount("");
       setDetailSelectedCrypto(null);
       
-      // Immediately refresh data
+      // Force immediate refresh of all user data
       queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/market-data"] });
       if (selectedUser) {
         queryClient.invalidateQueries({ queryKey: [`/api/admin/users/${selectedUser.id}/transactions`] });
       }
       
-      // Auto-redirect to user details to show updated balance
+      // Auto-open user details after brief delay to show updated balance
       setTimeout(() => {
         if (selectedUser) {
           setUserDetailsOpen(true);
         }
-      }, 300);
+      }, 800);
     },
     onError: () => {
       toast({ title: "Error", description: "Failed to credit user balance", variant: "destructive" });
@@ -120,25 +121,26 @@ export default function UserManagement({ users, isLoading }: UserManagementProps
     onSuccess: (data) => {
       toast({ title: "Success", description: "User balance debited successfully" });
       
-      // Clear form states
+      // Clear form states and close modals
       setActionDialogOpen(null);
       setDebitAmount("");
       setSelectedCrypto(null);
       setDetailDebitAmount("");
       setDetailSelectedCrypto(null);
       
-      // Immediately refresh data
+      // Force immediate refresh of all user data
       queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/market-data"] });
       if (selectedUser) {
         queryClient.invalidateQueries({ queryKey: [`/api/admin/users/${selectedUser.id}/transactions`] });
       }
       
-      // Auto-redirect to user details to show updated balance
+      // Auto-open user details after brief delay to show updated balance
       setTimeout(() => {
         if (selectedUser) {
           setUserDetailsOpen(true);
         }
-      }, 300);
+      }, 800);
     },
     onError: () => {
       toast({ title: "Error", description: "Failed to debit user balance", variant: "destructive" });
@@ -276,12 +278,20 @@ export default function UserManagement({ users, isLoading }: UserManagementProps
   };
 
   const handleRefresh = () => {
+    // Force refresh all data
     queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
     queryClient.invalidateQueries({ queryKey: ["/api/market-data"] });
+    queryClient.invalidateQueries({ queryKey: ["/api/admin/transactions"] });
     if (selectedUser) {
       queryClient.invalidateQueries({ queryKey: [`/api/admin/users/${selectedUser.id}/transactions`] });
     }
-    toast({ title: "Refreshed", description: "User data and balances updated" });
+    
+    // Force remount the component by clearing cache entirely
+    setTimeout(() => {
+      queryClient.refetchQueries({ queryKey: ["/api/admin/users"] });
+    }, 100);
+    
+    toast({ title: "Refreshed", description: "All user data and balances updated successfully" });
   };
 
   const handleDetailDebit = () => {
@@ -860,17 +870,33 @@ export default function UserManagement({ users, isLoading }: UserManagementProps
                     <CardContent>
                       {userTransactions && userTransactions.length > 0 ? (
                         <div className="space-y-3 max-h-96 overflow-y-auto">
-                          {userTransactions.map((transaction: any) => (
+                          {userTransactions.map((transaction: any) => {
+                            // Determine transaction status and colors
+                            const getTransactionStyle = (type: string, description: string) => {
+                              if (description?.includes('admin_credit')) {
+                                return { bg: 'bg-green-100', text: 'text-green-600', icon: '+', label: 'Credit' };
+                              }
+                              if (type === 'BUY' || type === 'deposit') {
+                                return { bg: 'bg-green-100', text: 'text-green-600', icon: '+', label: 'Buy' };
+                              }
+                              if (type === 'SELL' || type === 'sell') {
+                                return { bg: 'bg-red-100', text: 'text-red-600', icon: '-', label: 'Sell' };
+                              }
+                              // Default for pending or unknown
+                              return { bg: 'bg-orange-100', text: 'text-orange-600', icon: '~', label: 'Pending' };
+                            };
+                            
+                            const style = getTransactionStyle(transaction.type, transaction.description);
+                            
+                            return (
                             <div key={transaction.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
                               <div className="flex items-center space-x-3">
-                                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                                  transaction.type === 'BUY' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
-                                }`}>
-                                  {transaction.type === 'BUY' ? '+' : '-'}
+                                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${style.bg} ${style.text}`}>
+                                  {style.icon}
                                 </div>
                                 <div>
                                   <div className="flex items-center space-x-2">
-                                    <span className="font-medium">{transaction.type}</span>
+                                    <span className="font-medium">{style.label}</span>
                                     <span className="text-sm text-gray-500">{transaction.cryptocurrency.symbol}</span>
                                   </div>
                                   <div className="text-sm text-gray-500">
@@ -887,7 +913,8 @@ export default function UserManagement({ users, isLoading }: UserManagementProps
                                 </div>
                               </div>
                             </div>
-                          ))}
+                            );
+                          })}
                         </div>
                       ) : (
                         <div className="text-center py-8">
