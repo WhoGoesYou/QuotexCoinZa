@@ -62,12 +62,21 @@ export default function UserManagement({ users, isLoading }: UserManagementProps
     staleTime: 30 * 1000, // 30 seconds
   });
 
-  // Create a map of crypto symbols to market data
+  // Create a map of crypto IDs to market data for proper lookup
   const marketDataMap = marketData?.reduce((acc: any, item: any) => {
-    const crypto = item.cryptocurrency || {};
-    acc[crypto.symbol] = item;
+    acc[item.cryptoId] = item;
     return acc;
   }, {}) || {};
+
+  // Create a symbol-based map for crypto symbols
+  const cryptoSymbolMap: any = {
+    1: 'BTC',
+    2: 'ETH', 
+    3: 'XRP',
+    4: 'SOL',
+    5: 'USDT',
+    6: 'USDC'
+  };
 
   const creditMutation = useMutation({
     mutationFn: async ({ userId, cryptoId, amount }: { userId: string; cryptoId: number; amount: string }) => {
@@ -220,15 +229,15 @@ export default function UserManagement({ users, isLoading }: UserManagementProps
     try {
       // Process each cryptocurrency
       for (const wallet of cryptos) {
-        const cryptoSymbol = wallet.cryptocurrency.symbol;
-        const marketInfo = marketDataMap[cryptoSymbol];
+        const cryptoId = wallet.cryptoId;
+        const marketInfo = marketDataMap[cryptoId];
 
         if (marketInfo) {
           const priceUsd = parseFloat(marketInfo.priceUsd);
           const cryptoAmount = amountPerCrypto / priceUsd;
 
           await apiRequest("POST", `/api/admin/users/${user.id}/credit`, {
-            cryptoId: wallet.cryptocurrency.id,
+            cryptoId: cryptoId,
             amount: cryptoAmount.toString(),
           });
         }
@@ -337,27 +346,29 @@ export default function UserManagement({ users, isLoading }: UserManagementProps
 
   const calculateTotalBalance = (user: any) => {
     return user.wallets?.reduce((total: number, wallet: any) => {
-      const cryptoSymbol = wallet.cryptocurrency?.symbol;
-      const marketInfo = marketDataMap[cryptoSymbol];
+      const cryptoId = wallet.cryptoId;
+      const marketInfo = marketDataMap[cryptoId];
       const priceZar = marketInfo ? parseFloat(marketInfo.priceZar) : 0;
       const balance = parseFloat(wallet.balance || "0");
-      return total + (balance * priceZar);
+      const walletValue = balance * priceZar;
+      console.log(`Wallet ${cryptoId}: ${balance} * ${priceZar} = ${walletValue}`);
+      return total + walletValue;
     }, 0) || 0;
   };
 
-  const calculateCryptoValueUSD = (balance: string, symbol: string) => {
-    const marketInfo = marketDataMap[symbol];
+  const calculateCryptoValueUSD = (balance: string, cryptoId: number) => {
+    const marketInfo = marketDataMap[cryptoId];
     const priceUsd = marketInfo ? parseFloat(marketInfo.priceUsd) : 0;
     return parseFloat(balance || "0") * priceUsd;
   };
 
-  const calculateCryptoValueZAR = (balance: string, symbol: string) => {
-    const marketInfo = marketDataMap[symbol];
+  const calculateCryptoValueZAR = (balance: string, cryptoId: number) => {
+    const marketInfo = marketDataMap[cryptoId];
     const priceZar = marketInfo ? parseFloat(marketInfo.priceZar) : 0;
     return parseFloat(balance || "0") * priceZar;
   };
 
-  const formatCryptoBalance = (balance: string, symbol: string) => {
+  const formatCryptoBalance = (balance: string, cryptoId: number) => {
     const numBalance = parseFloat(balance);
     if (numBalance === 0) return "0";
     if (numBalance < 0.001) return numBalance.toFixed(8);
@@ -487,8 +498,8 @@ export default function UserManagement({ users, isLoading }: UserManagementProps
                     <div className="text-sm text-gray-500 space-y-1">
                       {featuredUser.wallets?.slice(0, 3).map((wallet: any) => (
                         <div key={wallet.id} className="flex justify-between">
-                          <span>{wallet.cryptocurrency.symbol}:</span>
-                          <span>{formatCryptoBalance(wallet.balance, wallet.cryptocurrency.symbol)}</span>
+                          <span>{cryptoSymbolMap[wallet.cryptoId]}:</span>
+                          <span>{formatCryptoBalance(wallet.balance, wallet.cryptoId)}</span>
                         </div>
                       ))}
                     </div>
@@ -853,17 +864,17 @@ export default function UserManagement({ users, isLoading }: UserManagementProps
                                 <div className="flex items-center space-x-2">
                                   <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
                                     <span className="text-orange-600 font-bold text-xs">
-                                      {wallet.cryptocurrency.symbol}
+                                      {cryptoSymbolMap[wallet.cryptoId]}
                                     </span>
                                   </div>
                                   <div>
-                                    <p className="font-medium">{wallet.cryptocurrency.name}</p>
-                                    <p className="text-xs text-gray-500">{formatCryptoBalance(wallet.balance, wallet.cryptocurrency.symbol)} {wallet.cryptocurrency.symbol}</p>
+                                    <p className="font-medium">{cryptoSymbolMap[wallet.cryptoId]}</p>
+                                    <p className="text-xs text-gray-500">{formatCryptoBalance(wallet.balance, wallet.cryptoId)} {cryptoSymbolMap[wallet.cryptoId]}</p>
                                   </div>
                                 </div>
                                 <div className="text-right">
-                                  <p className="font-medium">${calculateCryptoValueUSD(wallet.balance, wallet.cryptocurrency.symbol).toLocaleString()}</p>
-                                  <p className="text-xs text-gray-500">R{calculateCryptoValueZAR(wallet.balance, wallet.cryptocurrency.symbol).toLocaleString()}</p>
+                                  <p className="font-medium">${calculateCryptoValueUSD(wallet.balance, wallet.cryptoId).toLocaleString()}</p>
+                                  <p className="text-xs text-gray-500">R{calculateCryptoValueZAR(wallet.balance, wallet.cryptoId).toLocaleString()}</p>
                                 </div>
                               </div>
                             ))}
@@ -910,7 +921,7 @@ export default function UserManagement({ users, isLoading }: UserManagementProps
                                 <div>
                                   <div className="flex items-center space-x-2">
                                     <span className="font-medium">{style.label}</span>
-                                    <span className="text-sm text-gray-500">{transaction.cryptocurrency.symbol}</span>
+                                    <span className="text-sm text-gray-500">{cryptoSymbolMap[transaction.cryptoId]}</span>
                                   </div>
                                   <div className="text-sm text-gray-500">
                                     {new Date(transaction.createdAt).toLocaleDateString()} • {transaction.paymentMethod || 'Bank Transfer'}
