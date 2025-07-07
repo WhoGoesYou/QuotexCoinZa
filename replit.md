@@ -147,6 +147,13 @@ Changelog:
   * Added real-time balance updates immediately after credit/debit operations
   * Implemented professional Bitcoin exchange styling throughout admin interface
   * All user management workflows now function seamlessly with enhanced UX
+- July 07, 2025. Updated Hanlie Theron's Transaction History and Wallet Configuration:
+  * Created specific Bitcoin withdrawal transactions: $75,000 and $75,670
+  * Updated Bitcoin wallet address to: bc1q6ml4000ksk4zcn3jk6ml6c3nra8280kd4fntnz
+  * Set ETH and XRP balances to $0.74 each with proper ZAR conversions
+  * Generated realistic wallet addresses for all cryptocurrencies
+  * Updated transaction history to show proper withdrawal records with dates and amounts
+  * All cryptocurrency balances now display accurate USD/ZAR conversions using live market data
 ```
 
 ## User Preferences
