@@ -351,7 +351,7 @@ export default function UserManagement({ users, isLoading }: UserManagementProps
       const priceZar = marketInfo ? parseFloat(marketInfo.priceZar) : 0;
       const balance = parseFloat(wallet.balance || "0");
       const walletValue = balance * priceZar;
-      console.log(`Wallet ${cryptoId}: ${balance} * ${priceZar} = ${walletValue}`);
+
       return total + walletValue;
     }, 0) || 0;
   };
