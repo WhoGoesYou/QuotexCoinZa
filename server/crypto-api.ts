@@ -1,12 +1,12 @@
 import { storage } from './storage';
 
 interface CoinGeckoPrice {
-  bitcoin: { usd: number; zar: number };
-  ethereum: { usd: number; zar: number };
-  ripple: { usd: number; zar: number };
-  solana: { usd: number; zar: number };
-  tether: { usd: number; zar: number };
-  'usd-coin': { usd: number; zar: number };
+  bitcoin: { usd: number; zar: number; ngn: number };
+  ethereum: { usd: number; zar: number; ngn: number };
+  ripple: { usd: number; zar: number; ngn: number };
+  solana: { usd: number; zar: number; ngn: number };
+  tether: { usd: number; zar: number; ngn: number };
+  'usd-coin': { usd: number; zar: number; ngn: number };
 }
 
 const COINGECKO_API_URL = 'https://api.coingecko.com/api/v3/simple/price';
@@ -14,7 +14,7 @@ const COINGECKO_API_URL = 'https://api.coingecko.com/api/v3/simple/price';
 export async function fetchCryptoPrices(): Promise<void> {
   try {
     const response = await fetch(
-      `${COINGECKO_API_URL}?ids=bitcoin,ethereum,ripple,solana,tether,usd-coin&vs_currencies=usd,zar`
+      `${COINGECKO_API_URL}?ids=bitcoin,ethereum,ripple,solana,tether,usd-coin&vs_currencies=usd,zar,ngn`
     );
     
     if (!response.ok) {
@@ -39,6 +39,7 @@ export async function fetchCryptoPrices(): Promise<void> {
         await storage.updateMarketData(crypto.id, {
           priceUsd: priceData.usd.toString(),
           priceZar: priceData.zar.toString(),
+          priceNgn: priceData.ngn.toString(),
           lastUpdated: new Date()
         });
       }

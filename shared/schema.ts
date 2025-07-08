@@ -109,6 +109,7 @@ export const marketData = pgTable("market_data", {
   cryptoId: integer("crypto_id").notNull().unique(),
   priceZar: decimal("price_zar", { precision: 20, scale: 2 }).notNull(),
   priceUsd: decimal("price_usd", { precision: 20, scale: 8 }).notNull(),
+  priceNgn: decimal("price_ngn", { precision: 20, scale: 2 }).notNull().default("0"),
   percentChange24h: decimal("percent_change_24h", { precision: 10, scale: 2 }),
   volume24h: decimal("volume_24h", { precision: 20, scale: 2 }),
   marketCap: decimal("market_cap", { precision: 30, scale: 2 }),

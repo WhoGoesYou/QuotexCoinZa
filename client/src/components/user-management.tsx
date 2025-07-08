@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { FixedModal } from "@/components/ui/fixed-modal";
 import { SimpleAdminForm } from "./simple-admin-form";
+import { TransactionDetailModal } from "./transaction-detail-modal";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -53,6 +54,8 @@ export default function UserManagement({ users, isLoading }: UserManagementProps
   const [selectedCryptoFilter, setSelectedCryptoFilter] = useState<number | null>(null);
   const [expandedWallets, setExpandedWallets] = useState<Set<string>>(new Set());
   const [showAdminForm, setShowAdminForm] = useState(false);
+  const [selectedTransaction, setSelectedTransaction] = useState<any>(null);
+  const [transactionDetailOpen, setTransactionDetailOpen] = useState(false);
 
   // Separate state for detail dialog to avoid conflicts
   const [detailSelectedCrypto, setDetailSelectedCrypto] = useState<number | null>(null);
@@ -397,7 +400,12 @@ export default function UserManagement({ users, isLoading }: UserManagementProps
       setSelectedUser(targetUser);
       setUserDetailsOpen(true);
     }
-  };
+  }
+
+  const handleTransactionClick = (transaction: any) => {
+    setSelectedTransaction(transaction);
+    setTransactionDetailOpen(true);
+  };;
 
   const UserDetailDialog = ({ user, open, onClose }: { user: any, open: boolean, onClose: () => void }) => {
     if (!user || !open) return null;
@@ -956,7 +964,11 @@ export default function UserManagement({ users, isLoading }: UserManagementProps
                             const style = getTransactionStyle(transaction.type, transaction.description);
                             
                             return (
-                            <div key={transaction.id} className="p-4 border rounded-lg hover:bg-gradient-to-r hover:from-orange-50 hover:to-yellow-50 transition-all border-gray-200 hover:border-orange-200">
+                            <div 
+                              key={transaction.id} 
+                              className="p-4 border rounded-lg hover:bg-gradient-to-r hover:from-orange-50 hover:to-yellow-50 transition-all border-gray-200 hover:border-orange-200 cursor-pointer"
+                              onClick={() => handleTransactionClick(transaction)}
+                            >
                               <div className="flex items-start justify-between">
                                 <div className="flex items-start space-x-4">
                                   <div className={`w-12 h-12 rounded-full flex items-center justify-center ${style.bg} shadow-md`}>
@@ -1194,6 +1206,16 @@ export default function UserManagement({ users, isLoading }: UserManagementProps
             )}
           </DialogContent>
         </Dialog>
+
+        <TransactionDetailModal
+          transaction={selectedTransaction}
+          open={transactionDetailOpen}
+          onClose={() => {
+            setTransactionDetailOpen(false);
+            setSelectedTransaction(null);
+          }}
+          marketData={marketData}
+        />
       </CardContent>
     </Card>
   );
