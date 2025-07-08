@@ -51,6 +51,7 @@ export default function UserManagement({ users, isLoading }: UserManagementProps
   const [actionDialogOpen, setActionDialogOpen] = useState<"credit" | "debit" | null>(null);
   const [userDetailsOpen, setUserDetailsOpen] = useState(false);
   const [selectedCryptoFilter, setSelectedCryptoFilter] = useState<number | null>(null);
+  const [expandedWallets, setExpandedWallets] = useState<Set<string>>(new Set());
   const [showAdminForm, setShowAdminForm] = useState(false);
 
   // Separate state for detail dialog to avoid conflicts
@@ -995,23 +996,45 @@ export default function UserManagement({ users, isLoading }: UserManagementProps
                                       {(transaction.walletAddress || transaction.wallet_address) && (
                                         <div className="flex items-center gap-2">
                                           <span className="font-medium">Wallet:</span>
-                                          <span className="font-mono text-xs bg-gray-100 px-2 py-1 rounded">
-                                            {(transaction.walletAddress || transaction.wallet_address).substring(0, 20)}...
-                                          </span>
-                                          <Button
-                                            size="sm"
-                                            variant="ghost"
-                                            className="h-6 w-6 p-0"
-                                            onClick={() => {
-                                              navigator.clipboard.writeText(transaction.walletAddress || transaction.wallet_address);
-                                              toast({
-                                                title: "Copied!",
-                                                description: "Wallet address copied to clipboard",
-                                              });
-                                            }}
-                                          >
-                                            <Copy className="w-3 h-3" />
-                                          </Button>
+                                          <div className="flex items-center gap-1">
+                                            <Button
+                                              variant="ghost"
+                                              size="sm"
+                                              className="font-mono text-xs bg-gradient-to-r from-orange-50 to-yellow-50 hover:from-orange-100 hover:to-yellow-100 border border-orange-200 hover:border-orange-300 px-2 py-1 rounded transition-all duration-200 h-auto"
+                                              onClick={() => {
+                                                const walletKey = `${transaction.id}-${transaction.walletAddress || transaction.wallet_address}`;
+                                                const newExpanded = new Set(expandedWallets);
+                                                if (expandedWallets.has(walletKey)) {
+                                                  newExpanded.delete(walletKey);
+                                                } else {
+                                                  newExpanded.add(walletKey);
+                                                }
+                                                setExpandedWallets(newExpanded);
+                                              }}
+                                            >
+                                              <span className="text-orange-800">
+                                                {expandedWallets.has(`${transaction.id}-${transaction.walletAddress || transaction.wallet_address}`)
+                                                  ? (transaction.walletAddress || transaction.wallet_address)
+                                                  : `${(transaction.walletAddress || transaction.wallet_address).substring(0, 12)}...${(transaction.walletAddress || transaction.wallet_address).substring(-8)}`
+                                                }
+                                              </span>
+                                              <Eye className="w-3 h-3 ml-2 text-orange-600" />
+                                            </Button>
+                                            <Button
+                                              size="sm"
+                                              variant="ghost"
+                                              className="h-6 w-6 p-0 hover:bg-orange-100 hover:text-orange-700"
+                                              onClick={() => {
+                                                navigator.clipboard.writeText(transaction.walletAddress || transaction.wallet_address);
+                                                toast({
+                                                  title: "Copied!",
+                                                  description: "Wallet address copied to clipboard",
+                                                });
+                                              }}
+                                            >
+                                              <Copy className="w-3 h-3" />
+                                            </Button>
+                                          </div>
                                         </div>
                                       )}
                                     </div>
