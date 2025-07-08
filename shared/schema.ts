@@ -89,7 +89,9 @@ export const transactions = pgTable("transactions", {
   status: varchar("status", { length: 20 }).default("completed"), // 'pending', 'completed', 'failed'
   adminUserId: integer("admin_user_id"), // For admin actions
   description: text("description"),
-  paymentMethod: varchar("payment_method", { length: 50 }), // 'credit_card', 'debit_card', 'bank_transfer', 'wire_transfer', 'ach', 'wallet_address'
+  paymentMethod: varchar("payment_method", { length: 50 }), // 'credit_card', 'debit_card', 'bank_transfer', 'wire_transfer', 'ach', 'wallet_address', 'mpesa', 'paystack', 'flutterwave'
+  network: varchar("network", { length: 50 }), // 'bitcoin', 'ethereum', 'polygon', 'bsc', 'solana', etc.
+  fiatCurrency: varchar("fiat_currency", { length: 3 }), // 'USD', 'ZAR', 'NGN', 'EUR', 'GBP'
   walletAddress: varchar("wallet_address", { length: 255 }), // For withdrawals
   transactionHash: varchar("transaction_hash", { length: 255 }), // Blockchain transaction hash
   createdAt: timestamp("created_at").defaultNow(),
@@ -99,6 +101,15 @@ export const transactions = pgTable("transactions", {
 export const zarBalances = pgTable("zar_balances", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull().unique(),
+  balance: decimal("balance", { precision: 20, scale: 2 }).default("0"),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Fiat currency balances for users (multi-currency support)
+export const fiatBalances = pgTable("fiat_balances", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  currency: varchar("currency", { length: 3 }).notNull(), // USD, ZAR, NGN, EUR, GBP, etc.
   balance: decimal("balance", { precision: 20, scale: 2 }).default("0"),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -121,6 +132,14 @@ export const usersRelations = relations(users, ({ many }) => ({
   wallets: many(wallets),
   transactions: many(transactions),
   zarBalance: many(zarBalances),
+  fiatBalances: many(fiatBalances),
+}));
+
+export const fiatBalancesRelations = relations(fiatBalances, ({ one }) => ({
+  user: one(users, {
+    fields: [fiatBalances.userId],
+    references: [users.id],
+  }),
 }));
 
 export const cryptocurrenciesRelations = relations(cryptocurrencies, ({ many }) => ({

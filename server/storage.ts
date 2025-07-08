@@ -379,46 +379,131 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Generate a random wallet address
-  generateWalletAddress(cryptoSymbol: string): string {
-    const prefixes: Record<string, string> = {
-      BTC: "1",
-      ETH: "0x",
-      XRP: "r",
-      SOL: "",
-      USDT: "0x",
-      USDC: "0x",
-      ADA: "addr1",
-      DOT: "1",
-      LINK: "0x",
-      LTC: "L",
-      BCH: "1",
-      MATIC: "0x",
-      AVAX: "0x",
-      ATOM: "cosmos1",
-      UNI: "0x",
-      ALGO: "",
+  generateWalletAddress(cryptoSymbol: string, network?: string): string {
+    // Enhanced wallet address generation with network support
+    const cryptoNetworks: Record<string, Record<string, any>> = {
+      BTC: {
+        bitcoin: { prefix: "1", length: 34, pattern: "legacy" },
+        bitcoin_segwit: { prefix: "3", length: 34, pattern: "p2sh" },
+        bitcoin_native_segwit: { prefix: "bc1", length: 42, pattern: "bech32" }
+      },
+      ETH: {
+        ethereum: { prefix: "0x", length: 42, pattern: "hex" },
+        polygon: { prefix: "0x", length: 42, pattern: "hex" },
+        bsc: { prefix: "0x", length: 42, pattern: "hex" }
+      },
+      USDT: {
+        ethereum: { prefix: "0x", length: 42, pattern: "hex" },
+        tron: { prefix: "T", length: 34, pattern: "base58" },
+        polygon: { prefix: "0x", length: 42, pattern: "hex" },
+        bsc: { prefix: "0x", length: 42, pattern: "hex" }
+      },
+      USDC: {
+        ethereum: { prefix: "0x", length: 42, pattern: "hex" },
+        polygon: { prefix: "0x", length: 42, pattern: "hex" },
+        solana: { prefix: "", length: 44, pattern: "base58" },
+        avalanche: { prefix: "0x", length: 42, pattern: "hex" }
+      },
+      XRP: {
+        ripple: { prefix: "r", length: 34, pattern: "base58" }
+      },
+      SOL: {
+        solana: { prefix: "", length: 44, pattern: "base58" }
+      },
+      ADA: {
+        cardano: { prefix: "addr1", length: 63, pattern: "bech32" }
+      },
+      DOT: {
+        polkadot: { prefix: "1", length: 48, pattern: "ss58" }
+      },
+      LTC: {
+        litecoin: { prefix: "L", length: 34, pattern: "base58" },
+        litecoin_segwit: { prefix: "M", length: 34, pattern: "p2sh" },
+        litecoin_native_segwit: { prefix: "ltc1", length: 43, pattern: "bech32" }
+      },
+      BCH: {
+        bitcoin_cash: { prefix: "1", length: 34, pattern: "legacy" },
+        bitcoin_cash_cashaddr: { prefix: "bitcoincash:", length: 54, pattern: "cashaddr" }
+      },
+      MATIC: {
+        polygon: { prefix: "0x", length: 42, pattern: "hex" }
+      },
+      AVAX: {
+        avalanche_c: { prefix: "0x", length: 42, pattern: "hex" },
+        avalanche_x: { prefix: "X-avax1", length: 45, pattern: "bech32" },
+        avalanche_p: { prefix: "P-avax1", length: 45, pattern: "bech32" }
+      },
+      ATOM: {
+        cosmos: { prefix: "cosmos1", length: 45, pattern: "bech32" }
+      },
+      ALGO: {
+        algorand: { prefix: "", length: 58, pattern: "base32" }
+      },
+      BNB: {
+        bsc: { prefix: "0x", length: 42, pattern: "hex" },
+        binance_chain: { prefix: "bnb1", length: 43, pattern: "bech32" }
+      }
     };
 
-    const prefix = prefixes[cryptoSymbol] || "";
-    const randomPart = randomBytes(20).toString("hex");
-
-    if (cryptoSymbol === "BTC" || cryptoSymbol === "BCH" || cryptoSymbol === "DOT") {
-      return prefix + randomPart.substring(0, 33);
-    } else if (cryptoSymbol === "ETH" || cryptoSymbol === "USDT" || cryptoSymbol === "USDC" || cryptoSymbol === "LINK" || cryptoSymbol === "MATIC" || cryptoSymbol === "AVAX" || cryptoSymbol === "UNI") {
-      return prefix + randomPart;
-    } else if (cryptoSymbol === "XRP") {
-      return prefix + randomPart.substring(0, 33);
-    } else if (cryptoSymbol === "ADA") {
-      return prefix + randomPart.substring(0, 55);
-    } else if (cryptoSymbol === "LTC") {
-      return prefix + randomPart.substring(0, 33);
-    } else if (cryptoSymbol === "ATOM") {
-      return prefix + randomPart.substring(0, 39);
-    } else if (cryptoSymbol === "SOL" || cryptoSymbol === "ALGO") {
-      return randomPart.substring(0, 44);
+    const crypto = cryptoNetworks[cryptoSymbol];
+    if (!crypto) {
+      // Fallback for unknown cryptos
+      return "0x" + randomBytes(20).toString("hex");
     }
 
-    return randomPart.substring(0, 44);
+    // Use specified network or default to first available
+    const networkKey = network || Object.keys(crypto)[0];
+    const networkConfig = crypto[networkKey] || Object.values(crypto)[0];
+
+    const { prefix, length, pattern } = networkConfig;
+
+    switch (pattern) {
+      case "hex":
+        return prefix + randomBytes(20).toString("hex");
+      case "base58":
+        return prefix + this.generateBase58String(length - prefix.length);
+      case "base32":
+        return this.generateBase32String(length);
+      case "bech32":
+        return prefix + this.generateBech32String(length - prefix.length);
+      case "legacy":
+        return prefix + this.generateBase58String(length - prefix.length);
+      case "p2sh":
+        return prefix + this.generateBase58String(length - prefix.length);
+      case "cashaddr":
+        return prefix + this.generateBase58String(length - prefix.length);
+      case "ss58":
+        return prefix + this.generateBase58String(length - prefix.length);
+      default:
+        return prefix + randomBytes(Math.floor((length - prefix.length) / 2)).toString("hex");
+    }
+  }
+
+  private generateBase58String(length: number): string {
+    const chars = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+    let result = "";
+    for (let i = 0; i < length; i++) {
+      result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return result;
+  }
+
+  private generateBase32String(length: number): string {
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+    let result = "";
+    for (let i = 0; i < length; i++) {
+      result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return result;
+  }
+
+  private generateBech32String(length: number): string {
+    const chars = "qpzry9x8gf2tvdw0s3jn54khce6mua7l";
+    let result = "";
+    for (let i = 0; i < length; i++) {
+      result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return result;
   }
 
   // Auto-create wallets for all cryptocurrencies
