@@ -188,6 +188,17 @@ Changelog:
   * Improved wallet balance component with better address formatting and Bitcoin vibes
   * All cryptocurrency wallet addresses now display with proper styling and copy-to-clipboard functionality
   * Enhanced user interface with professional Bitcoin exchange aesthetics throughout
+- July 08, 2025. Major Transaction Enhancement and Multi-Currency Support:
+  * Added Nigerian Naira (NGN) currency support throughout the platform with real-time exchange rates
+  * Created comprehensive Transaction Detail Modal with complete transaction information
+  * Enhanced transaction history to be fully clickable with detailed modal views
+  * Added expandable wallet addresses with Bitcoin-styled UI and copy functionality
+  * Integrated real-time USD, ZAR, and NGN price displays for all cryptocurrencies
+  * Created Bitcoin withdrawal transaction for Hanlie showing her specific wallet address
+  * Enhanced transaction display with transaction hashes, payment methods, and timestamps
+  * Added current market data showing live prices in all three currencies (USD, ZAR, NGN)
+  * Prepared platform for future P2P trading functionality with multi-currency support
+  * All transaction rows now clickable with professional Bitcoin exchange styling maintained
 ```
 
 ## User Preferences
